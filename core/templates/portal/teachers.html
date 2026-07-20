@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="crumb"><a href="{% url 'portal_home' %}">Лекторий</a> / Преподаватели</div>
+<div class="section-title">
+  <h2>Преподаватели</h2>
+  <span class="hint">{{ teachers_total }}</span>
+</div>
+
+<form method="get" style="margin:4px 0 6px;position:relative;max-width:420px">
+  <input name="q" value="{{ query }}" placeholder="Найти по имени…"
+         style="width:100%;padding:10px 14px 10px 38px;border:1px solid var(--border);border-radius:11px;font:inherit;font-size:14px;background:#fff;outline:none">
+  <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.6">🔍</span>
+</form>
+
+<div class="chips">
+  <a class="chip {% if not letter %}active{% endif %}" href="?{% if query %}q={{ query }}{% endif %}">Все</a>
+  {% for start, end in active_ranges %}
+  <a class="chip {% if letter == start %}active{% endif %}"
+     href="?letter={{ start }}{% if query %}&q={{ query }}{% endif %}">{{ start }}-{{ end }}</a>
+  {% endfor %}
+</div>
+
+{% if teachers %}
+<div class="teach-cards">
+  {% for t in teachers %}
+  <a class="teach-card" href="{% url 'teacher_home' t.code %}">
+    <div class="avatar" style="background:{{ t.color }}">{{ t.initials }}</div>
+    <div>
+      <h3>{{ t.display_name }}</h3>
+      <p>{{ t.role }}</p>
+      <span>страница →</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">Никого не найдено</div>
+{% endif %}
+{% endblock %}

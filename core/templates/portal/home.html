@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load ru_plural %}
+{% block content %}
+<section style="text-align:center;padding:56px 0 26px">
+  <h1 style="font-size:clamp(32px,5vw,46px);font-weight:800;letter-spacing:-1px">
+    <span style="color:var(--accent)">Лекторий</span>
+  </h1>
+  <p style="color:var(--muted);max-width:640px;margin:12px auto 0;font-size:16.5px">
+    Учебные материалы от преподавателей-практиков:<br>
+    конспекты, разработки, видео и интерактивные модели
+  </p>
+  <form action="{% url 'search' %}" method="get" style="margin:26px auto 0;max-width:540px;position:relative">
+    <input name="q" placeholder="Найти материал: например, «законы Ньютона»…"
+           style="width:100%;padding:14px 18px 14px 44px;border:1px solid var(--border);border-radius:14px;font:inherit;font-size:15px;background:#fff;outline:none">
+    <span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);opacity:.55">🔍</span>
+  </form>
+</section>
+
+{% for dir in menu_directions %}
+  <div class="dir-name">{{ dir.name }}</div>
+  <div class="tiles">
+    {% for s in dir.subjects.all %}
+      {% if not s.is_hidden %}
+      <a class="tile" href="{% url 'subject_detail' s.slug %}">
+        <div class="tile-icon" style="background:{{ s.color }}18">{{ s.icon }}</div>
+        <h3>{{ s.name }}</h3>
+        <div class="tile-count" style="color:{{ s.color }}">
+          {% with n=s.materials.count %}{% if n %}{{ n }} {{ n|ru_plural:"материал,материала,материалов" }}{% else %}скоро{% endif %}{% endwith %}
+        </div>
+        {% with ts=s.teachers.all %}
+          {% if ts %}
+          <div class="tile-teach">{% for t in ts %}{{ t.short_name }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
+          {% endif %}
+        {% endwith %}
+      </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endfor %}
+
+<div class="section-title"><h2>Недавно опубликовано</h2><span class="hint">со всего портала</span></div>
+{% if recent %}
+<div class="mats">
+  {% for m in recent %}
+  <a class="mat-card" href="{% url 'material_detail' m.subject.slug m.slug %}">
+    <div class="mat-top">
+      <span class="badge" style="color:#2563EB;background:#EFF6FF">{{ m.get_type_display }}</span>
+      <span class="cat-tag" style="color:{{ m.subject.color }}">{{ m.subject.icon }} {{ m.subject.name }}</span>
+      <span class="mat-date">{{ m.created_at|date:"d.m.Y" }}</span>
+    </div>
+    <h3>{{ m.title }}</h3>
+    <p>{{ m.excerpt }}</p>
+    <div class="mat-meta">
+      <span>👤 {{ m.author.short_name }}</span>
+      {% if m.video_url %}<span>▶️ видео</span>{% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">Материалы появятся скоро</div>
+{% endif %}
+
+<div class="section-title"><h2>Преподаватели</h2><span class="hint">самые активные</span></div>
+<div class="teach-cards">
+  {% for t in teachers %}
+  <a class="teach-card" href="{% url 'teacher_home' t.code %}">
+    <div class="avatar" style="background:{{ t.color }}">{{ t.initials }}</div>
+    <div>
+      <h3>{{ t.display_name }}</h3>
+      <p>{{ t.role }}</p>
+      <span>{{ t.pub_count }} {{ t.pub_count|ru_plural:"материал,материала,материалов" }} →</span>
+    </div>
+  </a>
+  {% endfor %}
+  <a class="teach-card more-link" href="{% url 'teachers_list' %}">Все преподаватели ({{ teachers_total }}) →</a>
+</div>
+{% endblock %}

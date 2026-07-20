@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="crumb"><a href="{% url 'portal_home' %}">Лекторий</a> / Все предметы</div>
+<div class="section-title"><h2>Все предметы</h2></div>
+{% for dir in menu_directions %}
+  <div class="dir-name">{{ dir.name }}</div>
+  <div class="tiles">
+    {% for s in dir.subjects.all %}
+      {% if not s.is_hidden %}
+      <a class="tile" href="{% url 'subject_detail' s.slug %}">
+        <div class="tile-icon" style="background:{{ s.color }}18">{{ s.icon }}</div>
+        <h3>{{ s.name }}</h3>
+        <div class="tile-count" style="color:{{ s.color }}">
+          {% with n=s.materials.count %}{% if n %}{{ n }} {{ n|ru_plural:"материал,материала,материалов" }}{% else %}скоро{% endif %}{% endwith %}
+        </div>
+      </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endfor %}
+{% endblock %}

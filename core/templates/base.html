@@ -1,0 +1,137 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Лекторий — учебный портал{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--surface:#fff;--text:#1E293B;--muted:#64748B;--accent:#4F46E5;--accent-soft:#EEF2FF;--border:#E2E8F0}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Golos Text',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;display:flex;flex-direction:column;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+main{flex:1;width:100%}
+.container{max-width:1080px;margin:0 auto;padding:0 20px}
+#topbar{position:sticky;top:0;z-index:50}
+header{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.header-inner{display:flex;align-items:center;gap:8px;height:64px}
+.logo{font-weight:800;font-size:18px;color:var(--text);display:flex;align-items:center;gap:9px;white-space:nowrap;margin-right:10px}
+.logo-badge{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#4F46E5,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:17px;color:#fff}
+nav{display:flex;gap:4px}
+nav a,.navlink{color:var(--muted);font-weight:600;font-size:14.5px;padding:7px 12px;border-radius:9px;transition:.15s;white-space:nowrap}
+nav a:hover,.navlink:hover{background:var(--accent-soft);color:var(--accent)}
+.subjects-btn{background:none;border:none;font:inherit;font-weight:600;font-size:14.5px;color:var(--muted);padding:7px 12px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.subjects-btn:hover,.subjects-btn.open{background:var(--accent-soft);color:var(--accent)}
+.search{margin-left:auto;position:relative}
+.search input{width:210px;padding:8px 14px 8px 34px;border:1px solid var(--border);border-radius:10px;font:inherit;font-size:14px;background:var(--bg);outline:none}
+.search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:#fff}
+.search::before{content:'🔍';position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.6}
+.mega{position:absolute;top:100%;left:0;right:0;background:#fff;border-bottom:1px solid var(--border);box-shadow:0 24px 44px rgba(30,41,59,.14);display:none}
+.mega.open{display:block}
+.mega-inner{max-width:1080px;margin:0 auto;padding:22px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
+.mega-dir h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:6px}
+.mega-dir a{display:flex;gap:8px;align-items:center;padding:5px 8px;border-radius:8px;color:var(--text);font-size:13.5px;font-weight:600}
+.mega-dir a:hover{background:var(--accent-soft);color:var(--accent)}
+.crumb{font-size:13.5px;color:var(--muted);margin:26px 0 14px}
+.section-title{display:flex;align-items:baseline;gap:12px;margin:36px 0 16px}
+.section-title h2{font-size:21px;font-weight:700}
+.section-title .hint{color:var(--muted);font-size:13.5px}
+.dir-name{font-size:12.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:700;margin:26px 0 12px}
+.mini-label{font-size:13px;font-weight:600;color:var(--muted);margin:22px 0 10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;transition:.18s;color:var(--text);display:block}
+.tile:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(30,41,59,.10)}
+.tile-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px}
+.tile h3{font-size:16px;margin-bottom:4px}
+.tile-count{font-size:12.5px;font-weight:700}
+.tile-teach{font-size:12.5px;color:var(--muted);margin-top:6px}
+.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.cat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;transition:.2s;display:block;color:var(--text)}
+.cat-card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(30,41,59,.10)}
+.cat-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
+.cat-card h3{font-size:17.5px;margin-bottom:5px}
+.cat-card p{color:var(--muted);font-size:13.5px;line-height:1.5}
+.cat-count{margin-top:14px;font-size:12.5px;font-weight:700}
+.teach-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.teach-card{display:flex;gap:13px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:15px 17px;color:var(--text);transition:.18s}
+.teach-card:hover{border-color:var(--accent);box-shadow:0 8px 20px rgba(79,70,229,.10)}
+.avatar{width:46px;height:46px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0}
+.teach-card h3{font-size:15px}
+.teach-card p{font-size:12.5px;color:var(--muted)}
+.teach-card span{font-size:12.5px;font-weight:700;color:var(--accent)}
+.more-link{justify-content:center;font-weight:700;color:var(--accent);background:var(--accent-soft);border-style:dashed}
+.mats{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}
+.mat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;transition:.18s;display:flex;flex-direction:column;color:var(--text)}
+.mat-card:hover{border-color:var(--accent);box-shadow:0 8px 22px rgba(79,70,229,.10)}
+.mat-top{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.badge{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.cat-tag{font-size:12px;font-weight:600}
+.mat-date{margin-left:auto;font-size:12px;color:var(--muted)}
+.mat-card h3{font-size:16px;line-height:1.4;margin-bottom:6px}
+.mat-card p{color:var(--muted);font-size:13.5px;flex:1}
+.mat-meta{margin-top:12px;font-size:12.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0;align-items:center}
+.chip{display:inline-block;padding:7px 15px;border-radius:999px;border:1px solid var(--border);background:var(--surface);font-size:13.5px;font-weight:600;color:var(--muted);transition:.15s}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip-sep{width:1px;background:var(--border);align-self:stretch;margin:4px 6px}
+.pagination{display:flex;gap:6px;justify-content:center;margin:28px 0 8px}
+.page-btn{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-weight:600;font-size:14px;color:var(--muted)}
+.page-btn:hover{border-color:var(--accent);color:var(--accent)}
+.page-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.empty{color:var(--muted);text-align:center;padding:44px 0;font-size:15px}
+.hidden-note{margin-top:14px;display:inline-block;font-size:12.5px;color:var(--muted);border:1px dashed var(--border);border-radius:9px;padding:6px 12px;background:var(--bg)}
+footer{margin-top:60px;border-top:1px solid var(--border);padding:26px 20px;color:var(--muted);font-size:13.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;max-width:1080px;margin-left:auto;margin-right:auto;width:100%}
+@media(max-width:720px){nav{display:none}.navlink{display:none}.search input{width:140px}}
+</style>
+</head>
+<body>
+<div id="topbar">
+{% block header %}
+<header>
+  <div class="container header-inner">
+    <a class="logo" href="{% url 'portal_home' %}"><span class="logo-badge">Л</span> Лекторий</a>
+    <button class="subjects-btn" id="megaBtn">📚 Предметы <span id="megaChev">▾</span></button>
+    <a class="navlink" href="{% url 'teachers_list' %}">Преподаватели</a>
+    <form class="search" action="{% url 'search' %}" method="get">
+      <input name="q" placeholder="Поиск материалов…" value="{{ query|default:'' }}">
+    </form>
+  </div>
+</header>
+<div class="mega" id="megaPanel">
+  <div class="mega-inner">
+    {% for dir in menu_directions %}
+    <div class="mega-dir">
+      <h4>{{ dir.name }}</h4>
+      {% for s in dir.subjects.all %}
+        {% if not s.is_hidden %}
+        <a href="{% url 'subject_detail' s.slug %}">{{ s.icon }} {{ s.name }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+</div>
+
+<main class="container">{% block content %}{% endblock %}</main>
+
+<footer class="container">
+  <span>© {% now "Y" %} «Лекторий» · phys-it.ru</span>
+  <span>Сделано преподавателями — для учеников</span>
+</footer>
+
+<script>
+document.addEventListener('click', function(e){
+  var panel = document.getElementById('megaPanel');
+  var btn = document.getElementById('megaBtn');
+  if (!panel || !btn) return;
+  if (btn.contains(e.target)) { panel.classList.toggle('open'); btn.classList.toggle('open'); }
+  else if (!panel.contains(e.target)) { panel.classList.remove('open'); btn.classList.remove('open'); }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="crumb">
+  <a href="{% url 'portal_home' %}">Лекторий</a> /
+  {% if subject.is_hidden %}{{ subject.name }}{% else %}<a href="{% url 'all_subjects' %}">Предметы</a> / {{ subject.name }}{% endif %}
+</div>
+
+<div style="display:flex;gap:16px;align-items:center;margin:6px 0 4px">
+  <div class="cat-icon" style="background:{{ subject.color }}18;margin:0;width:52px;height:52px;font-size:25px">{{ subject.icon }}</div>
+  <div>
+    <h1 style="font-size:26px;line-height:1.2">{{ subject.name }}</h1>
+    <p style="color:var(--muted);font-size:14px">{{ subject.description }}</p>
+  </div>
+</div>
+
+{% if subject.is_hidden %}
+<div class="hidden-note">🔗 Этот раздел доступен только по прямой ссылке</div>
+{% endif %}
+
+{% if teachers %}
+<div class="mini-label">Преподают:</div>
+<div class="teach-cards">
+  {% for t in teachers %}
+  <a class="teach-card" href="{% url 'teacher_subject' t.code subject.slug %}">
+    <div class="avatar" style="background:{{ t.color }}">{{ t.initials }}</div>
+    <div><h3>{{ t.display_name }}</h3><span>материалы →</span></div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="chips">
+  <a class="chip {% if not current_type %}active{% endif %}"
+     href="?{% if current_teacher %}teacher={{ current_teacher }}&{% endif %}">Все типы</a>
+  {% for value, label in type_choices %}
+    {% if value in types %}
+    <a class="chip {% if current_type == value %}active{% endif %}"
+       href="?type={{ value }}{% if current_teacher %}&teacher={{ current_teacher }}{% endif %}">{{ label }}</a>
+    {% endif %}
+  {% endfor %}
+  {% if teachers|length > 1 %}
+  <span class="chip-sep"></span>
+  <a class="chip {% if not current_teacher %}active{% endif %}"
+     href="?{% if current_type %}type={{ current_type }}{% endif %}">Все преподаватели</a>
+  {% for t in teachers %}
+  <a class="chip {% if current_teacher == t.code %}active{% endif %}"
+     href="?teacher={{ t.code }}{% if current_type %}&type={{ current_type }}{% endif %}">👤 {{ t.short_name }}</a>
+  {% endfor %}
+  {% endif %}
+</div>
+
+{% if page.object_list %}
+<div class="mats">
+  {% for m in page.object_list %}
+  <a class="mat-card" href="{% url 'material_detail' m.subject.slug m.slug %}">
+    <div class="mat-top">
+      <span class="badge" style="color:#2563EB;background:#EFF6FF">{{ m.get_type_display }}</span>
+      <span class="cat-tag" style="color:{{ m.subject.color }}">{{ m.subject.icon }} {{ m.subject.name }}</span>
+      <span class="mat-date">{{ m.created_at|date:"d.m.Y" }}</span>
+    </div>
+    <h3>{{ m.title }}</h3>
+    <p>{{ m.excerpt }}</p>
+    <div class="mat-meta"><span>👤 {{ m.author.short_name }}</span></div>
+  </a>
+  {% endfor %}
+</div>
+
+{% if page.paginator.num_pages > 1 %}
+<div class="pagination">
+  {% for p in page.paginator.page_range %}
+  <a class="page-btn {% if page.number == p %}active{% endif %}"
+     href="?page={{ p }}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_teacher %}&teacher={{ current_teacher }}{% endif %}">{{ p }}</a>
+  {% endfor %}
+</div>
+{% endif %}
+{% else %}
+<div class="empty">Материалы по этому предмету появятся скоро</div>
+{% endif %}
+{% endblock %}

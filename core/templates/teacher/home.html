@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load ru_plural %}
+{% block title %}{{ teacher.display_name }} — Лекторий{% endblock %}
+{% block header %}
+<div style="background:var(--accent-soft);font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)">
+  <div class="container"><a href="{% url 'portal_home' %}" style="font-weight:600">← Лекторий — все предметы портала</a></div>
+</div>
+<header>
+  <div class="container header-inner">
+    <a class="logo" href="{% url 'teacher_home' teacher.code %}">
+      <span class="logo-badge" style="background:{{ teacher.color }}">
+        {% if teacher.brand_symbol %}{{ teacher.brand_symbol }}{% else %}{{ teacher.initials }}{% endif %}
+      </span>
+      {% if teacher.brand_title %}{{ teacher.brand_title }}{% else %}{{ teacher.display_name }}{% endif %}
+    </a>
+    <nav>
+      {% for s in public_subjects %}
+      <a href="{% url 'teacher_subject' teacher.code s.slug %}">{{ s.icon }} {{ s.name }}</a>
+      {% endfor %}
+    </nav>
+    <form class="search" action="{% url 'search' %}" method="get">
+      <input name="q" placeholder="Поиск…">
+    </form>
+  </div>
+</header>
+{% endblock %}
+{% block content %}
+<section style="padding:46px 0 8px">
+  <h1 style="font-size:clamp(24px,4vw,34px);font-weight:800;line-height:1.25;letter-spacing:-.5px;max-width:720px">
+    {% if teacher.brand_title %}
+    Материалы по <span style="color:var(--accent)">физике</span> и <span style="color:var(--accent)">программированию</span> — понятно и с практикой
+    {% else %}
+    {{ teacher.display_name }}
+    {% endif %}
+  </h1>
+  <p style="color:var(--muted);max-width:600px;margin-top:12px;font-size:16px">{{ teacher.bio }}</p>
+  <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+    <div class="avatar" style="background:{{ teacher.color }};width:40px;height:40px;font-size:13px">{{ teacher.initials }}</div>
+    <div style="font-size:14px;color:var(--muted)"><b style="color:var(--text)">{{ teacher.display_name }}</b> · {{ teacher.role }}</div>
+  </div>
+</section>
+
+<div class="section-title"><h2>Предметы</h2><span class="hint">{{ teacher.display_name }}</span></div>
+<div class="cats">
+  {% for s in public_subjects %}
+  <a class="cat-card" href="{% url 'teacher_subject' teacher.code s.slug %}">
+    <div class="cat-icon" style="background:{{ s.color }}18">{{ s.icon }}</div>
+    <h3>{{ s.name }}</h3>
+    <p>{{ s.description }}</p>
+    <div class="cat-count" style="color:{{ s.color }}">
+      {% with n=s.materials.count %}{{ n }} {{ n|ru_plural:"материал,материала,материалов" }} →{% endwith %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="section-title"><h2>Последние публикации</h2></div>
+{% if recent %}
+<div class="mats">
+  {% for m in recent %}
+  <a class="mat-card" href="{% url 'material_detail' m.subject.slug m.slug %}">
+    <div class="mat-top">
+      <span class="badge" style="color:#2563EB;background:#EFF6FF">{{ m.get_type_display }}</span>
+      <span class="cat-tag" style="color:{{ m.subject.color }}">{{ m.subject.icon }} {{ m.subject.name }}</span>
+      <span class="mat-date">{{ m.created_at|date:"d.m.Y" }}</span>
+    </div>
+    <h3>{{ m.title }}</h3>
+    <p>{{ m.excerpt }}</p>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">Материалы появятся скоро</div>
+{% endif %}
+{% endblock %}

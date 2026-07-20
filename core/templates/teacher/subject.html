@@ -1,0 +1,51 @@
+{% extends "teacher/home.html" %}
+{% block content %}
+<div class="crumb">
+  <a href="{% url 'portal_home' %}">Лекторий</a> /
+  <a href="{% url 'teacher_home' teacher.code %}">{{ teacher.display_name }}</a> /
+  {{ subject.name }}
+</div>
+
+<div style="display:flex;gap:16px;align-items:center;margin:6px 0 4px">
+  <div class="cat-icon" style="background:{{ subject.color }}18;margin:0;width:52px;height:52px;font-size:25px">{{ subject.icon }}</div>
+  <div>
+    <h1 style="font-size:26px;line-height:1.2">{{ subject.name }}</h1>
+    <p style="color:var(--muted);font-size:14px">{{ subject.description }}</p>
+  </div>
+</div>
+
+<div class="chips">
+  <a class="chip {% if not current_type %}active{% endif %}" href="?">Все</a>
+  {% for value, label in type_choices %}
+    {% if value in types %}
+    <a class="chip {% if current_type == value %}active{% endif %}" href="?type={{ value }}">{{ label }}</a>
+    {% endif %}
+  {% endfor %}
+</div>
+
+{% if page.object_list %}
+<div class="mats">
+  {% for m in page.object_list %}
+  <a class="mat-card" href="{% url 'material_detail' m.subject.slug m.slug %}">
+    <div class="mat-top">
+      <span class="badge" style="color:#2563EB;background:#EFF6FF">{{ m.get_type_display }}</span>
+      <span class="mat-date">{{ m.created_at|date:"d.m.Y" }}</span>
+    </div>
+    <h3>{{ m.title }}</h3>
+    <p>{{ m.excerpt }}</p>
+  </a>
+  {% endfor %}
+</div>
+
+{% if page.paginator.num_pages > 1 %}
+<div class="pagination">
+  {% for p in page.paginator.page_range %}
+  <a class="page-btn {% if page.number == p %}active{% endif %}"
+     href="?page={{ p }}{% if current_type %}&type={{ current_type }}{% endif %}">{{ p }}</a>
+  {% endfor %}
+</div>
+{% endif %}
+{% else %}
+<div class="empty">Здесь пока пусто</div>
+{% endif %}
+{% endblock %}

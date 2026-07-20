@@ -1,0 +1,103 @@
+{% extends "desk/base.html" %}
+{% block content %}
+<h1>Новый материал</h1>
+<div class="sub">Заполните поля ниже — остальное система сделает сама. Автор и дата подставятся автоматически.</div>
+
+<form method="post" enctype="multipart/form-data" class="card">
+  {% csrf_token %}
+
+  <div class="f-group">
+    <label class="f-label">Предмет</label>
+    <div class="chips">
+      {% for value, label in form.fields.subject.choices %}
+      <label class="chip">
+        <input type="radio" name="{{ form.subject.html_name }}" value="{{ value }}"
+               {% if form.subject.value|stringformat:"s" == value|stringformat:"s" %}checked{% endif %} required>
+        <span>{{ label }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    {% for e in form.subject.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+  </div>
+
+  <div class="f-group">
+    <label class="f-label">Тип материала</label>
+    <div class="chips">
+      {% for value, label in form.fields.type.choices %}
+      <label class="chip">
+        <input type="radio" name="{{ form.type.html_name }}" value="{{ value }}"
+               {% if form.type.value|stringformat:"s" == value|stringformat:"s" %}checked{% endif %}>
+        <span>{{ label }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    {% for e in form.type.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+  </div>
+
+  <div class="f-group">
+    <label class="f-label" for="{{ form.title.id_for_label }}">Название материала</label>
+    {{ form.title }}
+    {% for e in form.title.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+  </div>
+
+  <div class="f-group">
+    <label class="f-label" for="{{ form.excerpt.id_for_label }}">Краткое описание</label>
+    {{ form.excerpt }}
+    <div class="f-hint">Показывается в карточке материала на сайте</div>
+    {% for e in form.excerpt.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+  </div>
+
+  <div class="f-group">
+    <label class="f-label" for="{{ form.content.id_for_label }}">Текст материала</label>
+    {{ form.content }}
+    <div class="f-hint">Можно оставить пустым, если материал — только файл или видео. Ссылки в тексте станут кликабельными на сайте автоматически.</div>
+    {% for e in form.content.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+  </div>
+
+  <div class="f-section">
+    <h3>📎 Файл (необязательно)</h3>
+    <div class="f-hint">Максимум 2 МБ — конспект в PDF, карточки в DOCX. Файл больше? Загрузите его на Яндекс.Диск или облако Mail и добавьте ссылку ниже.</div>
+    <div class="f-group">
+      <label for="{{ file_form.file.id_for_label }}" class="file-btn">📂 Выбрать файл</label>
+      <span class="file-name" id="fileName">Файл не выбран</span>
+      {{ file_form.file }}
+      {% for e in file_form.file.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+    </div>
+    <div class="f-group">
+      {{ file_form.title }}
+    </div>
+  </div>
+
+  <div class="f-section">
+    <h3>🔗 Ссылка (необязательно)</h3>
+    <div class="f-hint">Внешний ресурс: облачный диск, симуляция PhET, статья и т.п.</div>
+    <div class="f-group">{{ link_form.title }}</div>
+    <div class="f-group">
+      {{ link_form.url }}
+      {% for e in link_form.url.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+    </div>
+  </div>
+
+  <div class="f-section">
+    <h3>▶️ Видео (необязательно)</h3>
+    <div class="f-hint">Ссылка на YouTube, RuTube или VK Видео — плеер появится на странице материала</div>
+    <div class="f-group">
+      {{ form.video_url }}
+      {% for e in form.video_url.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+    </div>
+  </div>
+
+  <div style="margin-top:26px;display:flex;gap:12px;flex-wrap:wrap">
+    <button type="submit" class="btn">Опубликовать</button>
+    <a class="btn btn-ghost" href="{% url 'desk_home' %}">Отмена</a>
+  </div>
+</form>
+
+<script>
+// Показываем имя выбранного файла рядом с кнопкой
+document.getElementById("{{ file_form.file.id_for_label }}").addEventListener("change", function(){
+  document.getElementById("fileName").textContent =
+    this.files.length ? this.files[0].name : "Файл не выбран";
+});
+</script>
+{% endblock %}

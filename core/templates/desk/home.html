@@ -1,0 +1,32 @@
+{% extends "desk/base.html" %}
+{% block content %}
+<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+  <div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+      <h1>Мои материалы</h1>
+      <a class="btn" style="margin-left:auto" href="{% url 'desk_material_new' %}">＋ Опубликовать материал</a>
+    </div>
+</div>
+
+<div class="card">
+{% if materials %}
+<table>
+  <tr><th>Материал</th><th>Предмет</th><th>Тип</th><th>Статус</th><th></th></tr>
+  {% for m in materials %}
+  <tr>
+    <td><b>{{ m.title }}</b><br><span style="color:var(--muted);font-size:13px">{{ m.created_at|date:"d.m.Y" }}</span></td>
+    <td>{{ m.subject.icon }} {{ m.subject.name }}</td>
+    <td>{{ m.get_type_display }}</td>
+    <td>{% if m.is_published %}<span class="pill pill-on">Опубликован</span>{% else %}<span class="pill pill-off">Скрыт</span>{% endif %}</td>
+    <td style="white-space:nowrap">
+      <a class="mini" href="{% url 'material_detail' m.subject.slug m.slug %}" target="_blank">Открыть</a> ·
+      <a class="mini" href="{% url 'desk_material_toggle' m.pk %}">{% if m.is_published %}Скрыть{% else %}Показать{% endif %}</a>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="empty">У вас пока нет материалов.<br>Нажмите «Опубликовать материал» — это займёт пару минут.</div>
+{% endif %}
+</div>
+{% endblock %}
