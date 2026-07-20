@@ -29,6 +29,52 @@ class Direction(models.Model):
     def __str__(self):
         return self.name
 
+SUBJECT_EMOJIS = [
+    ('', '— без эмодзи —'),
+    # Школьные предметы
+    ('📐', '📐 Математика'),
+    ('➗', '➗ Алгебра'),
+    ('📏', '📏 Геометрия'),
+    ('⚛️', '⚛️ Физика'),
+    ('🧪', '🧪 Химия'),
+    ('🧬', '🧬 Биология'),
+    ('🌍', '🌍 География'),
+    ('📜', '📜 История'),
+    ('🏛️', '🏛️ Обществознание'),
+    ('📖', '📖 Литература'),
+    ('✏️', '✏️ Русский язык'),
+    ('🇬🇧', '🇬🇧 Английский язык'),
+    ('🇩🇪', '🇩🇪 Немецкий язык'),
+    ('🇫🇷', '🇫🇷 Французский язык'),
+    ('🇨🇳', '🇨🇳 Китайский язык'),
+    ('💻', '💻 Информатика'),
+    ('🎨', '🎨 Искусство/ИЗО'),
+    ('🎵', '🎵 Музыка'),
+    ('⚽', '⚽ Физкультура'),
+    ('🔭', '🔭 Астрономия'),
+    ('🤖', '🤖 Робототехника'),
+    ('🧮', '🧮 Олимпиадная математика'),
+    # Языки программирования и технологии
+    ('🐍', '🐍 Python'),
+    ('☕', '☕ Java'),
+    ('⚡', '⚡ C++'),
+    ('🔷', '🔷 C#'),
+    ('🌐', '🌐 JavaScript'),
+    ('📜', '📜 TypeScript'),
+    ('🐘', '🐘 PHP'),
+    ('💎', '💎 Ruby'),
+    ('🐹', '🐹 Go'),
+    ('🦀', '🦀 Rust'),
+    ('🍎', '🍎 Swift'),
+    ('🤖', '🤖 Kotlin'),
+    ('🎯', '🎯 Dart'),
+    ('🗄️', '🗄️ SQL/Базы данных'),
+    ('🖥️', '🖥️ Веб-разработка (HTML/CSS)'),
+    ('📊', '📊 Анализ данных'),
+    ('🧠', '🧠 Machine Learning'),
+    ('🐧', '🐧 Linux/Администрирование'),
+    ('🎮', '🎮 Разработка игр'),
+]
 
 class Subject(models.Model):
     """Предмет. Привязан к направлению, может быть скрытым."""
@@ -37,6 +83,14 @@ class Subject(models.Model):
     direction = models.ForeignKey(
         Direction, on_delete=models.PROTECT,
         related_name="subjects", verbose_name="Направление"
+    )
+    emoji = models.CharField(
+        'Эмодзи',
+        max_length=8,
+        choices=SUBJECT_EMOJIS,
+        blank=True,
+        default='',
+        help_text='Иконка предмета для меню и страниц'
     )
     icon = models.CharField("Иконка (эмодзи)", max_length=10, default="📚")
     color = models.CharField("Цвет (hex)", max_length=7, default="#2563EB")
@@ -160,7 +214,7 @@ class Material(models.Model):
     class Meta:
         verbose_name = "Материал"
         verbose_name_plural = "Материалы"
-        ordering = ["-created_at"]
+        ordering = ["created_at"]
 
     def __str__(self):
         return self.title
