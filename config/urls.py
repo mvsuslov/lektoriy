@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path('upr-m4x8k2/', admin.site.urls),
     path("ckeditor5/", include("django_ckeditor_5.urls")),
     path("", include("core.urls")),
 ]
