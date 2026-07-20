@@ -8,9 +8,9 @@
     {% for s in dir.subjects.all %}
       {% if not s.is_hidden %}
       <a class="tile" href="{% url 'subject_detail' s.slug %}">
-        <div class="tile-icon" style="background:{{ s.color }}18">{{ s.icon }}</div>
+        <div class="tile-icon {% if s.name == 'Физика' %}tile-icon-physics{% elif 'ython' in s.name %}tile-icon-python{% elif 'атемат' in s.name %}tile-icon-math{% else %}tile-icon-default{% endif %}">{{ s.icon }}</div>
         <h3>{{ s.name }}</h3>
-        <div class="tile-count" style="color:{{ s.color }}">
+        <div class="tile-count">
           {% with n=s.materials.count %}{% if n %}{{ n }} {{ n|ru_plural:"материал,материала,материалов" }}{% else %}скоро{% endif %}{% endwith %}
         </div>
       </a>
