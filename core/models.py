@@ -84,7 +84,7 @@ class Subject(models.Model):
         Direction, on_delete=models.PROTECT,
         related_name="subjects", verbose_name="Направление"
     )
-    emoji = models.CharField(
+    icon = models.CharField(
         'Эмодзи',
         max_length=8,
         choices=SUBJECT_EMOJIS,
