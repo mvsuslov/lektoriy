@@ -92,8 +92,6 @@ class Subject(models.Model):
         default='',
         help_text='Иконка предмета для меню и страниц'
     )
-    icon = models.CharField("Иконка (эмодзи)", max_length=10, default="📚")
-    color = models.CharField("Цвет (hex)", max_length=7, default="#2563EB")
     description = models.CharField("Короткое описание", max_length=250, blank=True)
     is_hidden = models.BooleanField(
         "Скрытый предмет", default=False,
