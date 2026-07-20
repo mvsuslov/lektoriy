@@ -77,6 +77,41 @@ SUBJECT_EMOJIS = [
 ]
 
 class Subject(models.Model):
+    def icon_bg_color(self):
+        """Автоматический цвет фона иконки по имени предмета"""
+        name_lower = self.name.lower()
+
+        # Предопределённые цвета для популярных предметов
+        predefined = {
+            'физика': '#EEF2FF',
+            'python': '#F0FDF4',
+            'математика': '#FEF3C7',
+            'алгебра': '#FEF3C7',
+            'геометрия': '#FEF3C7',
+            'химия': '#F0F9FF',
+            'биология': '#ECFDF5',
+            'история': '#FEF2F2',
+            'обществознание': '#FFFBEB',
+            'литература': '#FDF2F8',
+            'русский': '#FDF2F8',
+            'английский': '#F0FDFA',
+            'немецкий': '#F8FAFC',
+            'информатика': '#EFF6FF',
+            'астрономия': '#F5F3FF',
+        }
+
+        # Ищем по ключевым словам
+        for key, color in predefined.items():
+            if key in name_lower:
+                return color
+
+        # Для остальных — цвет по хешу имени (всегда одинаковый для одного предмета)
+        import hashlib
+        hash_val = int(hashlib.md5(self.name.encode()).hexdigest()[:6], 16)
+        hue = hash_val % 360
+        return f'hsl({hue}, 70%, 95%)'
+
+
     """Предмет. Привязан к направлению, может быть скрытым."""
     name = models.CharField("Название", max_length=100)
     slug = models.SlugField("Адрес (slug)", unique=True)
