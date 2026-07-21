@@ -49,7 +49,7 @@
     <h3>{{ s.name }}</h3>
     <p>{{ s.description }}</p>
     <div class="cat-count" style="color:{{ s.icon_bg_color }}">
-      {% with n=s.materials.count %}{{ n }} {{ n|ru_plural:"материал,материала,материалов" }} →{% endwith %}
+      {% with n=s.pub_count %}{{ n }} {{ n|ru_plural:"материал,материала,материалов" }} →{% endwith %}
     </div>
   </a>
   {% endfor %}

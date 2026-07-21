@@ -145,12 +145,22 @@ def teacher_home(request, code):
         is_published=True, subject__is_hidden=False
     ).select_related("subject")
 
+    # Счётчик ОПУБЛИКОВАННЫХ материалов ЭТОГО препода по каждому предмету
+    public_subjects = list(teacher.subjects.filter(is_hidden=False))
+    counts = dict(
+        base.values_list("subject_id")
+            .annotate(c=Count("id"))
+            .values_list("subject_id", "c")
+    )
+    for s in public_subjects:
+        s.pub_count = counts.get(s.id, 0)
+
     view_mode = request.GET.get("view", "recent")  # 'recent' или 'all'
     return render(request, "teacher/home.html", {
         "teacher": teacher,
         "recent": base.order_by("-created_at")[:6],
         "materials": base.order_by("created_at"),
-        "public_subjects": teacher.subjects.filter(is_hidden=False),
+        "public_subjects": public_subjects,
         "view_mode": view_mode,
     })
 
