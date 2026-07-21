@@ -132,7 +132,7 @@ class TeacherProfileAdmin(admin.ModelAdmin):
             "fields": ("user", "first_name", "middle_name", "last_name", "show_last_name")
         }),
         ("Страница кабинета", {
-            "fields": ("code", "role", "bio", "color", "brand_symbol", "brand_title",
+            "fields": ("code", "role", "color", "brand_symbol", "brand_title",
                        "brand_headline", "brand_tagline", "subjects")
         }),
     )

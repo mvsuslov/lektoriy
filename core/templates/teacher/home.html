@@ -42,8 +42,7 @@
   </div>
 </section>
 
-<div class="section-title"><h2>Предметы</h2><span class="hint">{{ teacher.display_name }}</span></div>
-<div class="cats">
+<div class="section-title"><h2>Предметы</h2></div><div class="cats">
   {% for s in public_subjects %}
   <a class="cat-card" href="{% url 'teacher_subject' teacher.code s.slug %}">
     <div class="cat-icon" style="background:{{ s.icon_bg_color }}18">{{ s.icon }}</div>
