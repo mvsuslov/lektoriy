@@ -11,40 +11,56 @@
 body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;display:flex;flex-direction:column;min-height:100vh}
 main{flex:1}
 .container{max-width:860px;margin:0 auto;padding:0 20px}
+
+/* Шапка */
 .topbar{background:#fff;border-bottom:1px solid var(--border);padding:14px 0;margin-bottom:28px}
 .topbar .container{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.brand{font-weight:800;font-size:18px;color:var(--text);text-decoration:none}
+.brand{font-weight:800;font-size:18px;color:var(--text);text-decoration:none;white-space:nowrap}
 .brand b{color:var(--accent)}
-.topbar nav{margin-left:auto;display:flex;gap:10px;align-items:center}
+.topbar nav{margin-left:auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .topbar a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:600}
 .topbar a:hover{color:var(--accent)}
-.btn{display:inline-block;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:13px 26px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none}
+.topbar .teacher-name{font-size:14px;color:var(--muted)}
+.logout-btn{background:none;border:none;padding:0;color:var(--muted);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.logout-btn:hover{color:var(--danger)}
+
+.btn{display:inline-block;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:13px 26px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;text-align:center}
 .btn:hover{filter:brightness(1.1)}
 .btn-ghost{background:var(--accent-soft);color:var(--accent)}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px}
 h1{font-size:24px;margin-bottom:6px}
 .sub{color:var(--muted);font-size:14.5px;margin-bottom:22px}
+
+/* Формы */
 .f-group{margin-bottom:18px}
 .f-label{display:block;font-weight:700;font-size:15px;margin-bottom:6px}
 .f-hint{font-size:13px;color:var(--muted);margin-top:5px}
-.f-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:11px;font:inherit;font-size:15px;background:#fff}
+.f-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:11px;font:inherit;font-size:16px;background:#fff}
 .f-input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
 .f-error{color:var(--danger);font-size:13.5px;margin-top:5px}
 .f-section{border-top:1px dashed var(--border);margin-top:24px;padding-top:20px}
 .f-section h3{font-size:16px;margin-bottom:4px}
 .f-section .f-hint{margin-bottom:14px}
+
+/* Сообщения */
 .msg{padding:13px 16px;border-radius:11px;margin-bottom:18px;font-size:14.5px}
 .msg-ok{background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0}
 .msg-err{background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA}
+
+/* Таблица */
 table{width:100%;border-collapse:collapse;font-size:14.5px}
 th{text-align:left;color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:2px solid var(--border)}
 td{padding:11px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
-.pill{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px}
+tr:last-child td{border-bottom:none}
+
+.pill{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
 .pill-on{background:#F0FDF4;color:#15803D}
 .pill-off{background:#F1F5F9;color:var(--muted)}
 .mini{font-size:13px;font-weight:600;color:var(--accent);text-decoration:none}
 .mini:hover{text-decoration:underline}
 .empty{text-align:center;color:var(--muted);padding:36px 0}
+
+/* Чипсы */
 .chips{display:flex;gap:9px;flex-wrap:wrap}
 .chip{position:relative;cursor:pointer}
 .chip input{position:absolute;opacity:0;pointer-events:none}
@@ -52,18 +68,61 @@ td{padding:11px 10px;border-bottom:1px solid var(--border);vertical-align:middle
 .chip:hover span{border-color:var(--accent);color:var(--accent)}
 .chip input:checked + span{background:var(--accent);border-color:var(--accent);color:#fff}
 .chip input:focus-visible + span{box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* Файл */
 .file-btn{display:inline-block;background:var(--accent);color:#fff;border-radius:12px;padding:12px 24px;font-weight:700;font-size:15px;cursor:pointer;transition:.15s}
 .file-btn:hover{filter:brightness(1.1)}
 .file-name{margin-left:12px;font-size:14px;color:var(--muted)}
 input[type=file]{display:none}
+
 footer{margin-top:40px;border-top:1px solid var(--border);padding:20px;color:var(--muted);font-size:13px;text-align:center}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
-.mats{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}
-.teach-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
-.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(230px,100%),1fr));gap:14px}
+.mats{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(310px,100%),1fr));gap:16px}
+.teach-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:14px}
+.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px}
+
+/* CKEditor */
 .ck-editor__editable{min-height:220px;font-size:15px}
-.ck.ck-editor{border-radius:11px;overflow:hidden;border:1.5px solid var(--border)}
+.ck.ck-editor{border-radius:11px;overflow:hidden;border:1.5px solid var(--border);max-width:100%}
 .ck.ck-toolbar{border-bottom:1px solid var(--border);background:var(--bg)}
+.ck-content img{max-width:100%}
+
+/* ================= МОБИЛЬНАЯ АДАПТАЦИЯ ================= */
+@media(max-width:700px){
+  .container{padding:0 14px}
+  .topbar{padding:12px 0;margin-bottom:20px}
+  .topbar .container{gap:8px 14px}
+  .brand{font-size:17px}
+  .topbar nav{margin-left:0;width:100%;gap:10px 14px;padding-top:10px;border-top:1px solid var(--border)}
+  .topbar .teacher-name{width:100%;font-weight:700;color:var(--text)}
+  .topbar a,.logout-btn{font-size:13.5px}
+  h1{font-size:21px}
+  .card{padding:18px 16px;border-radius:14px}
+  .btn{width:100%;padding:14px 20px}
+
+  /* Таблица → карточки */
+  table,thead,tbody,tr{display:block}
+  thead{display:none}
+  tr{border:1px solid var(--border);border-radius:14px;margin-bottom:12px;padding:12px 14px;background:var(--surface)}
+  td{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;border-bottom:none;padding:6px 0;font-size:14px;text-align:right}
+  td::before{content:attr(data-label);color:var(--muted);font-weight:600;font-size:12.5px;text-align:left;flex-shrink:0;padding-top:2px}
+  td[data-label=""]::before{display:none}
+  td:first-child{padding-bottom:10px;margin-bottom:6px;border-bottom:1px dashed var(--border);text-align:left}
+  td:first-child::before{display:none}
+  .desk-actions{flex-direction:column;align-items:stretch;gap:8px}
+  .desk-actions .mini{display:block;text-align:center;padding:10px 12px;border:1.5px solid var(--accent-soft);background:var(--accent-soft);border-radius:10px;font-size:14px;text-decoration:none}
+  .desk-actions .mini:hover{text-decoration:none;filter:brightness(.97)}
+
+  /* CKEditor на маленьком экране */
+  .ck-editor__editable{min-height:180px}
+  .chip span{padding:9px 15px;font-size:14px}
+  .file-name{display:block;margin:8px 0 0;word-break:break-all}
+}
+@media(max-width:400px){
+  .card{padding:16px 13px}
+  td{font-size:13.5px}
+}
 </style>
 {{ form.media }}
 </head>
@@ -72,12 +131,12 @@ footer{margin-top:40px;border-top:1px solid var(--border);padding:20px;color:var
   <div class="container">
     <a class="brand" href="{% url 'portal_home' %}"><b>Л</b> Лекторий</a>
     <nav>
-      <span style="font-size:14px;color:var(--muted)">{{ teacher.display_name }}</span>
+      <span class="teacher-name">{{ teacher.display_name }}</span>
       <a href="{% url 'portal_home' %}">На сайт</a>
       <a href="{% url 'desk_password' %}">Сменить пароль</a>
       <form method="post" action="{% url 'desk_logout' %}" style="display:inline">
         {% csrf_token %}
-        <button type="submit" style="background:none;border:none;padding:0;color:var(--muted);font:inherit;font-size:14px;font-weight:600;cursor:pointer">Выйти</button>
+        <button type="submit" class="logout-btn">Выйти</button>
       </form>
     </nav>
   </div>
