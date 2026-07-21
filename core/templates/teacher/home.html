@@ -44,10 +44,10 @@
 <div class="cats">
   {% for s in public_subjects %}
   <a class="cat-card" href="{% url 'teacher_subject' teacher.code s.slug %}">
-    <div class="cat-icon" style="background:{{ s.icon_bg_color }}1A;border:1.5px solid {{ s.icon_bg_color }}59">{{ s.icon }}</div>
+    <div class="cat-icon" style="background:{{ s.icon_bg_color }}">{{ s.icon }}</div>
     <h3>{{ s.name }}</h3>
     <p>{{ s.description }}</p>
-    <div class="cat-count" style="color:{{ s.icon_bg_color }}">
+    <div class="cat-count">
       {% with n=s.materials.count %}{{ n }} {{ n|ru_plural:"материал,материала,материалов" }} →{% endwith %}
     </div>
   </a>
@@ -61,7 +61,7 @@
   <a class="mat-card" href="{% url 'material_detail' m.subject.slug m.slug %}">
     <div class="mat-top">
       <span class="badge" style="color:#2563EB;background:#EFF6FF">{{ m.get_type_display }}</span>
-      <span class="cat-tag" style="color:{{ m.subject.icon_bg_color }}">{{ m.subject.icon }} {{ m.subject.name }}</span>
+      <span class="cat-tag">{{ m.subject.icon }} {{ m.subject.name }}</span>
       <span class="mat-date">{{ m.created_at|date:"d.m.Y" }}</span>
     </div>
     <h3>{{ m.title }}</h3>
