@@ -16,6 +16,13 @@ def validate_file_size(file):
         )
 
 
+def validate_html_file(file):
+    """Проверка, что загружается HTML-файл (для интерактивных моделей)."""
+    validate_file_size(file)
+    if not file.name.lower().endswith(('.html', '.htm')):
+        raise ValidationError("Модель должна быть HTML-файлом (.html)")
+
+
 class Direction(models.Model):
     """Направление: «Точные науки», «Гуманитарные» и т.д. Создаёт только суперпользователь."""
     name = models.CharField("Название", max_length=100)
@@ -213,6 +220,10 @@ def attachment_path(instance, filename):
     return f"materials/{instance.material_id}/{filename}"
 
 
+def simulation_path(instance, filename):
+    return f"sims/{filename}"
+
+
 class Material(models.Model):
     class Type(models.TextChoices):
         LESSON = "lesson", "Конспект"
@@ -220,6 +231,15 @@ class Material(models.Model):
         VIDEO = "video", "Видео"
         INTERACTIVE = "interactive", "Интерактив"
         ARTICLE = "article", "Статья"
+
+    # Цвета бейджей типов (как в прототипе)
+    TYPE_COLORS = {
+        "lesson": ("#2563EB", "#EFF6FF"),
+        "practice": ("#7C3AED", "#F5F3FF"),
+        "video": ("#DC2626", "#FEF2F2"),
+        "interactive": ("#0D9488", "#F0FDFA"),
+        "article": ("#D97706", "#FFFBEB"),
+    }
 
     subject = models.ForeignKey(
         Subject, on_delete=models.PROTECT,
@@ -248,6 +268,12 @@ class Material(models.Model):
         "Код встраивания (интерактив)", blank=True,
         help_text="iframe PhET, GeoGebra и т.п. Только для типа «Интерактив»"
     )
+    simulation_file = models.FileField(
+        "HTML-файл интерактивной модели", upload_to=simulation_path,
+        blank=True, validators=[validate_html_file],
+        help_text="Своя модель (HTML+CSS+JS в одном .html файле). "
+                  "Встроится в страницу материала. Только для типа «Интерактив»"
+    )
     is_published = models.BooleanField("Опубликовано", default=True)
     created_at = models.DateTimeField("Создано", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)
@@ -259,6 +285,14 @@ class Material(models.Model):
 
     def __str__(self):
         return self.title
+
+    def type_color(self):
+        """Насыщенный цвет бейджа типа материала."""
+        return self.TYPE_COLORS.get(self.type, ("#2563EB", "#EFF6FF"))[0]
+
+    def type_bg(self):
+        """Бледный фон бейджа типа материала."""
+        return self.TYPE_COLORS.get(self.type, ("#2563EB", "#EFF6FF"))[1]
 
     def save(self, *args, **kwargs):
         if not self.slug:

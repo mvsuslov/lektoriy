@@ -6,7 +6,7 @@
 </div>
 
 <div style="display:flex;gap:16px;align-items:center;margin:6px 0 4px">
-  <div class="cat-icon" style="background:{{ subject.color }}18;margin:0;width:52px;height:52px;font-size:25px">{{ subject.icon }}</div>
+  <div class="cat-icon" style="background:{{ subject.icon_bg_color }}18;margin:0;width:52px;height:52px;font-size:25px">{{ subject.icon }}</div>
   <div>
     <h1 style="font-size:26px;line-height:1.2">{{ subject.name }}</h1>
     <p style="color:var(--muted);font-size:14px">{{ subject.description }}</p>
@@ -54,13 +54,17 @@
   {% for m in page.object_list %}
   <a class="mat-card" href="{% url 'material_detail' m.subject.slug m.slug %}">
     <div class="mat-top">
-      <span class="badge" style="color:#2563EB;background:#EFF6FF">{{ m.get_type_display }}</span>
-      <span class="cat-tag" style="color:{{ m.subject.color }}">{{ m.subject.icon }} {{ m.subject.name }}</span>
+      <span class="badge" style="color:{{ m.type_color }};background:{{ m.type_bg }}">{{ m.get_type_display }}</span>
+      <span class="cat-tag" style="color:{{ m.subject.icon_bg_color }}">{{ m.subject.icon }} {{ m.subject.name }}</span>
       <span class="mat-date">{{ m.created_at|date:"d.m.Y" }}</span>
     </div>
     <h3>{{ m.title }}</h3>
     <p>{{ m.excerpt }}</p>
-    <div class="mat-meta"><span>👤 {{ m.author.short_name }}</span></div>
+    <div class="mat-meta">
+      <span>👤 {{ m.author.short_name }}</span>
+      {% if m.video_url %}<span>▶️ видео</span>{% endif %}
+      {% if m.simulation_file or m.embed_code %}<span>🕹 интерактив</span>{% endif %}
+    </div>
   </a>
   {% endfor %}
 </div>

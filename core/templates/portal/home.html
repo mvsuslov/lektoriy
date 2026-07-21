@@ -10,7 +10,7 @@
     конспекты, разработки, видео и интерактивные модели
   </p>
   <form action="{% url 'search' %}" method="get" style="margin:26px auto 0;max-width:540px;position:relative">
-    <input name="q" placeholder="Найти материал..."
+    <input name="q" placeholder="Найти материал: например, «законы Ньютона»…"
            style="width:100%;padding:14px 18px 14px 44px;border:1px solid var(--border);border-radius:14px;font:inherit;font-size:15px;background:#fff;outline:none">
     <span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);opacity:.55">🔍</span>
   </form>
@@ -44,7 +44,7 @@
   {% for m in recent %}
   <a class="mat-card" href="{% url 'material_detail' m.subject.slug m.slug %}">
     <div class="mat-top">
-      <span class="badge" style="color:#2563EB;background:#EFF6FF">{{ m.get_type_display }}</span>
+      <span class="badge" style="color:{{ m.type_color }};background:{{ m.type_bg }}">{{ m.get_type_display }}</span>
       <span class="cat-tag" style="color:{{ m.subject.icon_bg_color }}">{{ m.subject.icon }} {{ m.subject.name }}</span>
       <span class="mat-date">{{ m.created_at|date:"d.m.Y" }}</span>
     </div>
@@ -53,6 +53,7 @@
     <div class="mat-meta">
       <span>👤 {{ m.author.short_name }}</span>
       {% if m.video_url %}<span>▶️ видео</span>{% endif %}
+      {% if m.simulation_file or m.embed_code %}<span>🕹 интерактив</span>{% endif %}
     </div>
   </a>
   {% endfor %}

@@ -23,6 +23,7 @@
 .video-box iframe{width:100%;height:100%;border:0}
 .embed-box{margin-top:22px;border:1px solid var(--border);border-radius:14px;overflow:hidden}
 .embed-box iframe{width:100%;min-height:420px;border:0;display:block}
+.sim-head{padding:12px 16px;background:var(--accent-soft);font-weight:700;font-size:14px;color:var(--accent);border-bottom:1px solid var(--border)}
 .attach{margin-top:26px;border-top:1px solid var(--border);padding-top:20px}
 .attach h3{font-size:16px;margin-bottom:12px}
 .file-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--border);border-radius:11px;margin-bottom:8px;background:var(--bg);transition:.15s}
@@ -45,8 +46,8 @@
 
 <article class="article">
   <div class="mat-top">
-    <span class="badge" style="color:#2563EB;background:#EFF6FF">{{ material.get_type_display }}</span>
-    <span class="cat-tag" style="color:{{ material.subject.color }}">{{ material.subject.icon }} {{ material.subject.name }}</span>
+    <span class="badge" style="color:{{ material.type_color }};background:{{ material.type_bg }}">{{ material.get_type_display }}</span>
+    <span class="cat-tag" style="color:{{ material.subject.icon_bg_color }}">{{ material.subject.icon }} {{ material.subject.name }}</span>
     <span class="mat-date">{{ material.created_at|date:"d.m.Y" }}</span>
   </div>
   <h1>{{ material.title }}</h1>
@@ -62,7 +63,12 @@
   </div>
   {% endif %}
 
-  {% if material.embed_code %}
+  {% if material.simulation_file %}
+  <div class="embed-box">
+    <div class="sim-head">🕹 Интерактивная модель</div>
+    <iframe src="{{ material.simulation_file.url }}" title="Интерактивная модель" loading="lazy"></iframe>
+  </div>
+  {% elif material.embed_code %}
   <div class="embed-box">{{ material.embed_code|safe }}</div>
   {% endif %}
 
