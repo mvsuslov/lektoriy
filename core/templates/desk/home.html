@@ -20,7 +20,9 @@
     <td>{% if m.is_published %}<span class="pill pill-on">Опубликован</span>{% else %}<span class="pill pill-off">Скрыт</span>{% endif %}</td>
     <td style="white-space:nowrap">
       <a class="mini" href="{% url 'material_detail' m.subject.slug m.slug %}" target="_blank">Открыть</a> ·
+      <a class="mini" href="{% url 'desk_material_edit' m.pk %}">Изменить</a> ·
       <a class="mini" href="{% url 'desk_material_toggle' m.pk %}">{% if m.is_published %}Скрыть{% else %}Показать{% endif %}</a>
+    </td>
     </td>
   </tr>
   {% endfor %}

@@ -17,5 +17,6 @@ urlpatterns = [
     path("desk/toggle/<int:pk>/", views.desk_material_toggle, name="desk_material_toggle"),
     path("desk/password/", views.desk_password, name="desk_password"),
     path("desk/logout/", views.desk_logout, name="desk_logout"),
+    path("desk/edit/<int:pk>/", views.desk_material_edit, name="desk_material_edit"),
 
 ]

@@ -283,6 +283,32 @@ def desk_material_new(request):
         "link_form": link_form,
     })
 
+@teacher_required
+def desk_material_edit(request, pk):
+    """Редактирование своего материала."""
+    teacher = get_teacher(request)
+    material = get_object_or_404(Material, pk=pk)
+    # Чужой материал редактировать нельзя (суперюзеру — можно)
+    if not request.user.is_superuser and (not teacher or material.author != teacher):
+        return redirect("desk_home")
+
+    if request.method == "POST":
+        form = TeacherMaterialForm(request.POST, instance=material,
+                                   teacher=material.author)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Изменения сохранены!")
+            return redirect("desk_home")
+    else:
+        form = TeacherMaterialForm(instance=material, teacher=material.author)
+
+    return render(request, "desk/new.html", {
+        "teacher": teacher or material.author,
+        "form": form,
+        "file_form": AttachmentForm(prefix="file"),
+        "link_form": LinkForm(prefix="link"),
+        "editing": material,
+    })
 
 @teacher_required
 def desk_material_toggle(request, pk):

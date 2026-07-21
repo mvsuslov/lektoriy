@@ -1,7 +1,12 @@
 {% extends "desk/base.html" %}
 {% block content %}
+{% if editing %}
+<h1>Изменить материал</h1>
+<div class="sub">«{{ editing.title }}» — поправьте нужные поля и сохраните.</div>
+{% else %}
 <h1>Новый материал</h1>
 <div class="sub">Заполните поля ниже — остальное система сделает сама. Автор и дата подставятся автоматически.</div>
+{% endif %}
 
 <form method="post" enctype="multipart/form-data" class="card">
   {% csrf_token %}
@@ -54,6 +59,7 @@
     {% for e in form.content.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
   </div>
 
+  {% if not editing %}
   <div class="f-section">
     <h3>📎 Файл (необязательно)</h3>
     <div class="f-hint">Максимум 2 МБ — конспект в PDF, карточки в DOCX. Файл больше? Загрузите его на Яндекс.Диск или облако Mail и добавьте ссылку ниже.</div>
@@ -77,6 +83,7 @@
       {% for e in link_form.url.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
     </div>
   </div>
+  {% endif %}
 
   <div class="f-section">
     <h3>▶️ Видео (необязательно)</h3>
@@ -88,11 +95,12 @@
   </div>
 
   <div style="margin-top:26px;display:flex;gap:12px;flex-wrap:wrap">
-    <button type="submit" class="btn">Опубликовать</button>
+    <button type="submit" class="btn">{% if editing %}Сохранить изменения{% else %}Опубликовать{% endif %}</button>
     <a class="btn btn-ghost" href="{% url 'desk_home' %}">Отмена</a>
   </div>
 </form>
 
+{% if not editing %}
 <script>
 // Показываем имя выбранного файла рядом с кнопкой
 document.getElementById("{{ file_form.file.id_for_label }}").addEventListener("change", function(){
@@ -100,4 +108,5 @@ document.getElementById("{{ file_form.file.id_for_label }}").addEventListener("c
     this.files.length ? this.files[0].name : "Файл не выбран";
 });
 </script>
+{% endif %}
 {% endblock %}
