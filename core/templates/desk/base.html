@@ -61,7 +61,12 @@ footer{margin-top:40px;border-top:1px solid var(--border);padding:20px;color:var
 .mats{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}
 .teach-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
 .cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.ck-editor__editable{min-height:220px;font-size:15px}
+.ck.ck-editor{border-radius:11px;overflow:hidden;border:1.5px solid var(--border)}
+.ck.ck-toolbar{border-bottom:1px solid var(--border);background:var(--bg)}
 </style>
+{% load django_ckeditor_5 %}
+{{ form.media }}
 </head>
 <body>
 <div class="topbar">

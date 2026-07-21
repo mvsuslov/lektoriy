@@ -1,4 +1,5 @@
 from django import forms
+from django_ckeditor_5.widgets import CKEditor5Widget
 
 from .models import Attachment, Link, Material, Subject
 
@@ -21,10 +22,7 @@ class TeacherMaterialForm(forms.ModelForm):
                 "class": "f-input", "rows": 3,
                 "placeholder": "1–2 предложения: что внутри и для кого",
             }),
-            "content": forms.Textarea(attrs={
-                "class": "f-input", "rows": 8,
-                "placeholder": "Основной текст материала. Ссылки становятся кликабельными автоматически.",
-            }),
+            "content": CKEditor5Widget(config_name="default"),   # ← было Textarea
             "video_url": forms.URLInput(attrs={
                 "class": "f-input",
                 "placeholder": "https://… (YouTube, RuTube, VK Видео)",
