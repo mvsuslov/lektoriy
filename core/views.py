@@ -1,13 +1,27 @@
+from functools import wraps
+
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, redirect, render
-from .forms import AttachmentForm, LinkForm, TeacherMaterialForm
+from django.contrib.auth import authenticate, login, update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect, render
 
+from .forms import AttachmentForm, LinkForm, TeacherMaterialForm
 from .models import Material, Subject, TeacherProfile
 
 PER_PAGE = 6
+
+
+def teacher_required(view_func):
+    """Кабинет невидим снаружи: незалогиненным — 404, а не страница входа."""
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            raise Http404
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 def public_materials():
@@ -178,13 +192,43 @@ def search(request):
     return render(request, "portal/search.html", {
         "query": query, "results": results,
     })
-    
-    
+
+
+# ------------------------------------------------------------------
+# Вход на портал (секретный адрес /upr-m4x8k2/)
+# ------------------------------------------------------------------
+
+def portal_login(request):
+    """Единая страница входа: админ → админка, преподаватель → кабинет."""
+    if request.user.is_authenticated:
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect("admin:index")
+        return redirect("desk_home")
+
+    error = ""
+    if request.method == "POST":
+        email = request.POST.get("email", "").strip()
+        password = request.POST.get("password", "")
+        user = authenticate(request, username=email, password=password)
+        if user is not None:
+            login(request, user)
+            if user.is_staff or user.is_superuser:
+                return redirect(request.GET.get("next") or "admin:index")
+            return redirect("desk_home")
+        error = "Неверная почта или пароль. Попробуйте ещё раз."
+
+    return render(request, "desk/login.html", {"error": error})
+
+
+# ------------------------------------------------------------------
+# Кабинет преподавателя
+# ------------------------------------------------------------------
+
 def get_teacher(request):
     return getattr(request.user, "teacher_profile", None)
 
 
-@login_required
+@teacher_required
 def desk_home(request):
     """Простой кабинет преподавателя: список его материалов + кнопка публикации."""
     teacher = get_teacher(request)
@@ -199,7 +243,7 @@ def desk_home(request):
     })
 
 
-@login_required
+@teacher_required
 def desk_material_new(request):
     """Публикация нового материала — минимум действий."""
     teacher = get_teacher(request)
@@ -238,7 +282,7 @@ def desk_material_new(request):
     })
 
 
-@login_required
+@teacher_required
 def desk_material_toggle(request, pk):
     """Быстрое снятие с публикации / публикация."""
     teacher = get_teacher(request)
@@ -248,3 +292,27 @@ def desk_material_toggle(request, pk):
     material.is_published = not material.is_published
     material.save(update_fields=["is_published"])
     return redirect("desk_home")
+
+
+@teacher_required
+def desk_password(request):
+    """Смена пароля прямо в кабинете — без админки."""
+    teacher = get_teacher(request)
+    if not teacher:
+        return redirect("portal_home")
+
+    if request.method == "POST":
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # чтобы не выкинуло из сессии
+            messages.success(request, "Пароль изменён! "
+                                      "Используйте новый при следующем входе.")
+            return redirect("desk_home")
+    else:
+        form = PasswordChangeForm(request.user)
+
+    return render(request, "desk/password.html", {
+        "teacher": teacher,
+        "form": form,
+    })
