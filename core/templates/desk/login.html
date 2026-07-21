@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вход для преподавателей — Лекторий</title>
+<style>
+:root{--bg:#F8FAFC;--surface:#fff;--text:#1E293B;--muted:#64748B;--accent:#4F46E5;--accent-soft:#EEF2FF;--border:#E2E8F0;--danger:#DC2626}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:36px;width:100%;max-width:420px}
+.logo{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:8px}
+.logo-badge{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#4F46E5,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff;font-weight:800}
+.logo span{font-weight:800;font-size:20px}
+.sub{text-align:center;color:var(--muted);font-size:14px;margin-bottom:24px}
+label{display:block;font-weight:700;font-size:14.5px;margin:0 0 6px}
+input{width:100%;padding:13px 15px;border:1.5px solid var(--border);border-radius:11px;font:inherit;font-size:15.5px;margin-bottom:16px}
+input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+button{width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:14px;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+button:hover{filter:brightness(1.1)}
+.error{background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA;border-radius:11px;padding:12px 15px;font-size:14px;margin-bottom:16px}
+.back{display:block;text-align:center;margin-top:18px;color:var(--muted);font-size:13.5px;text-decoration:none}
+.back:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<form method="post" class="card">
+  {% csrf_token %}
+  <div class="logo"><span class="logo-badge">Л</span><span>Лекторий</span></div>
+  <div class="sub">Вход для преподавателей</div>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <label for="email">Электронная почта</label>
+  <input type="email" name="email" id="email" required autofocus
+         autocomplete="username" placeholder="ivanova@school.ru">
+  <label for="password">Пароль</label>
+  <input type="password" name="password" id="password" required
+         autocomplete="current-password" placeholder="••••••••">
+  <button type="submit">Войти</button>
+  <a class="back" href="/">← Вернуться на сайт</a>
+</form>
+</body>
+</html>
