@@ -123,3 +123,11 @@ CKEDITOR_5_CONFIGS = {
         },
     },
 }
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://phys-it.ru",
+    "https://www.phys-it.ru",
+]
+
