@@ -207,7 +207,7 @@ def search(request):
 
 
 # ------------------------------------------------------------------
-# Вход на портал (секретный адрес /upr-m4x8k2/)
+# Вход на портал
 # ------------------------------------------------------------------
 
 def portal_login(request):
@@ -249,9 +249,12 @@ def desk_home(request):
                                 "Обратитесь к администратору портала.")
         return redirect("portal_home")
     materials = teacher.materials.select_related("subject")
+    # Пустая форма нужна для {{ form.media }} в base.html
+    form = TeacherMaterialForm(teacher=teacher)
     return render(request, "desk/home.html", {
         "teacher": teacher,
         "materials": materials,
+        "form": form,
     })
 
 
@@ -350,9 +353,12 @@ def desk_password(request):
     else:
         form = PasswordChangeForm(request.user)
 
+    # Пустая форма материала нужна для {{ form.media }} в base.html
+    material_form = TeacherMaterialForm(teacher=teacher)
     return render(request, "desk/password.html", {
         "teacher": teacher,
-        "form": form,
+        "form": material_form,
+        "password_form": form,
     })
 
 @require_POST
