@@ -98,7 +98,7 @@ footer{margin-top:60px;border-top:1px solid var(--border);padding:26px 20px;colo
   <div class="container header-inner">
     <a class="logo" href="{% url 'portal_home' %}"><span class="logo-badge">Л</span> Лекторий</a>
     <button class="subjects-btn" id="megaBtn">📚 Предметы <span id="megaChev">▾</span></button>
-    <a class="navlink" href="{% url 'teachers_list' %}">Преподаватели</a>
+    <a class="navlink" href="{% url 'teachers_list' %}">👤 Преподаватели</a>
     <form class="search" action="{% url 'search' %}" method="get">
       <input name="q" placeholder="Поиск материалов…" value="{{ query|default:'' }}">
     </form>
