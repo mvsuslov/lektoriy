@@ -27,13 +27,15 @@
 {% block content %}
 <section style="padding:46px 0 8px">
   <h1 style="font-size:clamp(24px,4vw,34px);font-weight:800;line-height:1.25;letter-spacing:-.5px;max-width:720px">
-    {% if teacher.brand_title %}
-    Материалы по <span style="color:var(--accent)">физике</span> и <span style="color:var(--accent)">программированию</span> — понятно и с практикой
+    {% if teacher.brand_headline %}
+    {{ teacher.headline_html|safe }}
     {% else %}
     {{ teacher.display_name }}
     {% endif %}
   </h1>
-  <p style="color:var(--muted);max-width:600px;margin-top:12px;font-size:16px">{{ teacher.bio }}</p>
+  <p style="color:var(--muted);max-width:600px;margin-top:12px;font-size:16px">
+    {% if teacher.brand_tagline %}{{ teacher.brand_tagline }}{% else %}{{ teacher.bio }}{% endif %}
+  </p>
   <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
     <div class="avatar" style="background:{{ teacher.color }};width:40px;height:40px;font-size:13px">{{ teacher.initials }}</div>
     <div style="font-size:14px;color:var(--muted)"><b style="color:var(--text)">{{ teacher.display_name }}</b> · {{ teacher.role }}</div>

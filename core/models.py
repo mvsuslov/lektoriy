@@ -3,6 +3,7 @@ from django.db import models
 from django.utils.text import slugify
 from django_ckeditor_5.fields import CKEditor5Field
 from django.core.exceptions import ValidationError
+import re
 
 MAX_FILE_SIZE = 1.5 * 1024 * 1024  # 2 МБ — поменяете число, когда будет нужно
 
@@ -148,12 +149,12 @@ class Subject(models.Model):
                   "Доступен только по прямой ссылке. Для частных занятий."
     )
     order = models.PositiveIntegerField("Порядок", default=0)
-    created_at = models.DateTimeField("Создан", auto_now_add=True)  # ← НОВОЕ ПОЛЕ
+    created_at = models.DateTimeField("Создан", auto_now_add=True)
 
     class Meta:
         verbose_name = "Предмет"
         verbose_name_plural = "Предметы"
-        ordering = ["created_at", "id"]  # ← БЫЛО: ["order", "name"]
+        ordering = ["created_at", "id"]
 
     def __str__(self):
         return self.name
@@ -190,6 +191,16 @@ class TeacherProfile(models.Model):
         "Название кабинета", max_length=100, blank=True,
         help_text="Например: Физика и код. Если пусто — отображаемое имя"
     )
+    brand_headline = models.CharField(
+        "Заголовок кабинета", max_length=200, blank=True,
+        help_text="Например: Материалы по [физике] и [программированию] — понятно и с практикой. "
+                  "Слова в [скобках] будут выделены цветом. Если пусто — отображаемое имя"
+    )
+    brand_tagline = models.TextField(
+        "Подзаголовок кабинета", blank=True,
+        help_text="Например: Конспекты уроков, лабораторные работы, видеоразборы и интерактивные модели. "
+                  "Если пусто — будет bio"
+    )
     subjects = models.ManyToManyField(
         Subject, related_name="teachers", verbose_name="Предметы", blank=True
     )
@@ -214,6 +225,22 @@ class TeacherProfile(models.Model):
 
     def initials(self):
         return f"{self.first_name[0]}{self.middle_name[0]}"
+
+    def headline_html(self):
+        """Заголовок с акцентами: [слово] → <span style="color:var(--accent)">слово</span>"""
+        if not self.brand_headline:
+            return ""
+        text = self.brand_headline
+        # Экранируем HTML для безопасности
+        import html
+        text = html.escape(text)
+        # Заменяем [текст] на span с акцентным цветом
+        text = re.sub(
+            r'\[([^\]]+)\]',
+            r'<span style="color:var(--accent)">\1</span>',
+            text
+        )
+        return text
 
 
 def attachment_path(instance, filename):

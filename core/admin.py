@@ -127,7 +127,15 @@ class MaterialAdmin(admin.ModelAdmin):
 class TeacherProfileAdmin(admin.ModelAdmin):
     list_display = ("__str__", "code", "role", "show_last_name", "subjects_list")
     filter_horizontal = ("subjects",)
-    readonly_fields = ()
+    fieldsets = (
+        ("Личные данные", {
+            "fields": ("user", "first_name", "middle_name", "last_name", "show_last_name")
+        }),
+        ("Страница кабинета", {
+            "fields": ("code", "role", "bio", "color", "brand_symbol", "brand_title",
+                       "brand_headline", "brand_tagline", "subjects")
+        }),
+    )
 
     @admin.display(description="Предметы")
     def subjects_list(self, obj):
