@@ -125,12 +125,13 @@ def teacher_home(request, code):
     teacher = get_object_or_404(
         TeacherProfile.objects.prefetch_related("subjects"), code=code
     )
-    recent = teacher.materials.filter(
+    base = teacher.materials.filter(
         is_published=True, subject__is_hidden=False
-    ).select_related("subject")[:6]
+    ).select_related("subject")
     return render(request, "teacher/home.html", {
         "teacher": teacher,
-        "recent": recent,
+        "recent": base.order_by("-created_at")[:6],   # свежие слева
+        "materials": base.order_by("created_at"),      # все по порядку (старые слева)
         "public_subjects": teacher.subjects.filter(is_hidden=False),
     })
 

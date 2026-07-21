@@ -54,7 +54,7 @@
   {% endfor %}
 </div>
 
-<div class="section-title"><h2>Последние публикации</h2></div>
+<div class="section-title"><h2>Последние публикации</h2><span class="hint">свежие обновления</span></div>
 {% if recent %}
 <div class="mats">
   {% for m in recent %}
@@ -76,4 +76,24 @@
 {% else %}
 <div class="empty">Материалы появятся скоро</div>
 {% endif %}
-{% endblock %}
+
+{% if materials %}
+<div class="section-title"><h2>Все материалы</h2><span class="hint">по порядку изучения</span></div>
+<div class="mats">
+  {% for m in materials %}
+  <a class="mat-card" href="{% url 'material_detail' m.subject.slug m.slug %}">
+    <div class="mat-top">
+      <span class="badge" style="color:{{ m.type_color }};background:{{ m.type_bg }}">{{ m.get_type_display }}</span>
+      <span class="cat-tag" style="color:{{ m.subject.icon_bg_color }}">{{ m.subject.icon }} {{ m.subject.name }}</span>
+      <span class="mat-date">{{ m.created_at|date:"d.m.Y" }}</span>
+    </div>
+    <h3>{{ m.title }}</h3>
+    <p>{{ m.excerpt }}</p>
+    <div class="mat-meta">
+      {% if m.video_url %}<span>▶️ видео</span>{% endif %}
+      {% if m.simulation_file or m.embed_code %}<span>🕹 интерактив</span>{% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
