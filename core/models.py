@@ -126,7 +126,6 @@ class Subject(models.Model):
         hash_val = int(hashlib.md5(self.name.encode()).hexdigest()[:6], 16)
         return palette[hash_val % len(palette)]
 
-
     """Предмет. Привязан к направлению, может быть скрытым."""
     name = models.CharField("Название", max_length=100)
     slug = models.SlugField("Адрес (slug)", unique=True)
@@ -149,11 +148,12 @@ class Subject(models.Model):
                   "Доступен только по прямой ссылке. Для частных занятий."
     )
     order = models.PositiveIntegerField("Порядок", default=0)
+    created_at = models.DateTimeField("Создан", auto_now_add=True)  # ← НОВОЕ ПОЛЕ
 
     class Meta:
         verbose_name = "Предмет"
         verbose_name_plural = "Предметы"
-        ordering = ["order", "name"]
+        ordering = ["created_at", "id"]  # ← БЫЛО: ["order", "name"]
 
     def __str__(self):
         return self.name

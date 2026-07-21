@@ -18,7 +18,7 @@ def public_materials():
 
 
 def portal_home(request):
-    recent = public_materials()[:6]
+    recent = public_materials().order_by("-created_at")[:6]  # ← свежие слева
     teachers = (
         TeacherProfile.objects
         .annotate(
