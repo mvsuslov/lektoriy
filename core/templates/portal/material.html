@@ -69,8 +69,15 @@
     <iframe src="{{ material.simulation_file.url }}" title="Интерактивная модель" loading="lazy"></iframe>
   </div>
   {% elif material.embed_code %}
-  <div class="embed-box">{{ material.embed_code|safe }}</div>
-  {% endif %}
+  <div class="embed-box">
+    <div class="sim-head">🕹 Интерактивная модель</div>
+    {% if material.embed_code|slice:":4" == "http" %}
+      <iframe src="{{ material.embed_code }}" title="Интерактивная модель"
+              allowfullscreen loading="lazy"></iframe>
+    {% else %}
+      {{ material.embed_code|safe }}
+    {% endif %}
+  </div>  {% endif %}
 
   {% if material.attachments.all %}
   <div class="attach">
