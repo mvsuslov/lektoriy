@@ -71,7 +71,10 @@ footer{margin-top:40px;border-top:1px solid var(--border);padding:20px;color:var
       <span style="font-size:14px;color:var(--muted)">{{ teacher.display_name }}</span>
       <a href="{% url 'portal_home' %}">На сайт</a>
       <a href="{% url 'desk_password' %}">Сменить пароль</a>
-      <a href="{% url 'admin:logout' %}">Выйти</a>
+      <form method="post" action="{% url 'desk_logout' %}" style="display:inline">
+        {% csrf_token %}
+        <button type="submit" style="background:none;border:none;padding:0;color:var(--muted);font:inherit;font-size:14px;font-weight:600;cursor:pointer">Выйти</button>
+      </form>
     </nav>
   </div>
 </div>

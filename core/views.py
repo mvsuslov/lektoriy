@@ -7,6 +7,8 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth import logout as auth_logout
+from django.views.decorators.http import require_POST
 
 from .forms import AttachmentForm, LinkForm, TeacherMaterialForm
 from .models import Material, Subject, TeacherProfile
@@ -316,3 +318,9 @@ def desk_password(request):
         "teacher": teacher,
         "form": form,
     })
+
+@require_POST
+def desk_logout(request):
+    """Выход из кабинета — только POST, после выхода на главную."""
+    auth_logout(request)
+    return redirect("portal_home")
