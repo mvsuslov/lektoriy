@@ -128,11 +128,14 @@ def teacher_home(request, code):
     base = teacher.materials.filter(
         is_published=True, subject__is_hidden=False
     ).select_related("subject")
+
+    view_mode = request.GET.get("view", "recent")  # 'recent' или 'all'
     return render(request, "teacher/home.html", {
         "teacher": teacher,
-        "recent": base.order_by("-created_at")[:6],   # свежие слева
-        "materials": base.order_by("created_at"),      # все по порядку (старые слева)
+        "recent": base.order_by("-created_at")[:6],
+        "materials": base.order_by("created_at"),
         "public_subjects": teacher.subjects.filter(is_hidden=False),
+        "view_mode": view_mode,
     })
 
 
