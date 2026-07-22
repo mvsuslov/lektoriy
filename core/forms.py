@@ -94,44 +94,29 @@ class TeacherMaterialForm(forms.ModelForm):
         if not code:
             return code
 
-        # Проверяем, что код содержит iframe (можно разрешить и другие теги, но для безопасности оставим только iframe)
-        # Если код не содержит iframe, пропускаем через bleach с разрешёнными тегами (но с ограничениями)
-        # Для простоты: если есть iframe, проверяем его src
-        # Иначе — очищаем через bleach (удаляем все опасные теги)
-        if '<iframe' not in code.lower():
-            # Очищаем от опасных тегов (скрипты, onclick и т.п.)
-            cleaned = bleach.clean(
-                code,
-                tags=ALLOWED_EMBED_TAGS,
-                attributes=ALLOWED_EMBED_ATTRIBUTES,
-                protocols=ALLOWED_EMBED_PROTOCOLS,
-                strip=True
-            )
-        else:
-            # Сначала пропускаем через bleach, чтобы удалить всё лишнее
-            cleaned = bleach.clean(
-                code,
-                tags=['iframe'],
-                attributes=ALLOWED_EMBED_ATTRIBUTES,
-                protocols=ALLOWED_EMBED_PROTOCOLS,
-                strip=True
-            )
-            # Дополнительно проверяем src iframe (не должен быть javascript: или data:)
-            # Находим все iframe и проверяем src
-            import re
-            iframe_pattern = re.compile(r'<iframe\s+([^>]*)>', re.IGNORECASE)
-            # Простая проверка: если есть src, проверяем, что он начинается с http:// или https://
-            # Удаляем iframe с небезопасными src
-            def safe_iframe(match):
-                attrs = match.group(1)
-                # Ищем src="..." или src='...'
-                src_match = re.search(r'src\s*=\s*["\']([^"\']+)["\']', attrs, re.IGNORECASE)
-                if src_match:
-                    src = src_match.group(1)
-                    if not src.startswith(('http://', 'https://')):
-                        return ''  # удаляем iframe
-                return match.group(0)
-            cleaned = re.sub(r'<iframe\s+[^>]*>', safe_iframe, cleaned, flags=re.IGNORECASE)
+        # Очистка через bleach (разрешены только iframe с безопасными атрибутами)
+        cleaned = bleach.clean(
+            code,
+            tags=['iframe'],
+            attributes=ALLOWED_EMBED_ATTRIBUTES,
+            protocols=ALLOWED_EMBED_PROTOCOLS,
+            strip=True
+        )
+
+        # Дополнительная проверка src iframe (запрещаем javascript: и data:)
+        import re
+        iframe_pattern = re.compile(r'<iframe\s+([^>]*)>', re.IGNORECASE | re.DOTALL)
+
+        def safe_iframe(match):
+            attrs = match.group(1)  # теперь группа существует
+            src_match = re.search(r'src\s*=\s*["\']([^"\']+)["\']', attrs, re.IGNORECASE)
+            if src_match:
+                src = src_match.group(1)
+                if not src.startswith(('http://', 'https://')):
+                    return ''  # удаляем небезопасный iframe
+            return f'<iframe {attrs}>'
+
+        cleaned = re.sub(iframe_pattern, safe_iframe, cleaned, flags=re.IGNORECASE | re.DOTALL)
 
         return cleaned
 
