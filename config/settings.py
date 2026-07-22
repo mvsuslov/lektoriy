@@ -12,10 +12,40 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
-CKEDITOR_5_ALLOW_ALL_USERS = True
-# HTTPS-куки
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
+
+# ==== Безопасность: HTTPS и заголовки (включаются только в продакшене) ====
+if not DEBUG:
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+else:
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+    SECURE_SSL_REDIRECT = False
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
+    SECURE_CONTENT_TYPE_NOSNIFF = False
+    # SECURE_PROXY_SSL_HEADER не задаём (локально прокси нет)
+
+# ==== Защита от DoS через большие запросы ====
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440        # 2.5 МБ
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
+
+# ==== django-axes (брутфорс) ====
+AXES_ENABLED = True
+AXES_FAILURE_LIMIT = 3
+AXES_COOLOFF_TIME = 3                        # 3 часа
+AXES_LOCKOUT_TEMPLATE = 'axes/lockout.html'
+AXES_VERBOSE = True
+AXES_LOCKOUT_PARAMETERS = ['ip_address']
+AXES_RESET_ON_SUCCESS = True
+AXES_DISABLE_ACCESS_LOG = False
 
 # Application definition
 
@@ -27,6 +57,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_ckeditor_5',
+    'axes',
     'core',
 ]
 
@@ -36,6 +67,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'axes.middleware.AxesMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -106,8 +138,12 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",
     "core.backends.EmailBackend",
 ]
+
+# ==== CKEditor 5 — отключаем всеобщий доступ ====
+CKEDITOR_5_ALLOW_ALL_USERS = False
 
 CKEDITOR_5_CONFIGS = {
     "default": {
@@ -127,10 +163,37 @@ CKEDITOR_5_CONFIGS = {
     },
 }
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
 CSRF_TRUSTED_ORIGINS = [
     "https://phys-it.ru",
     "https://www.phys-it.ru",
 ]
 
+# ==== Настройка логирования ====
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'django.request': {
+            'handlers': ['mail_admins', 'console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'axes': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+    },
+}

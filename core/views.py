@@ -10,6 +10,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth import logout as auth_logout
 from django.views.decorators.http import require_POST
 
+from axes.decorators import axes_dispatch
+
 from .forms import AttachmentForm, LinkForm, TeacherMaterialForm
 from .models import Material, Subject, TeacherProfile
 
@@ -34,7 +36,7 @@ def public_materials():
 
 
 def portal_home(request):
-    recent = public_materials().order_by("-created_at")[:6]  # ← свежие слева
+    recent = public_materials().order_by("-created_at")[:6]
     teachers = (
         TeacherProfile.objects
         .annotate(
@@ -54,11 +56,25 @@ def portal_home(request):
 
 
 def all_subjects(request):
-    return render(request, "portal/subjects.html")
+    # Все предметы уже отфильтрованы через контекстный процессор (pub_count считает только не скрытые),
+    # но на всякий случай передадим только не скрытые.
+    subjects = Subject.objects.filter(is_hidden=False).select_related('direction')
+    return render(request, "portal/subjects.html", {"subjects": subjects})
 
 
 def subject_detail(request, slug):
     subject = get_object_or_404(Subject, slug=slug)
+
+    # ==== ДОБАВЛЕНО: проверка is_hidden ====
+    if subject.is_hidden:
+        # Если предмет скрыт, доступ только для суперпользователя или преподавателя, у которого есть этот предмет
+        user = request.user
+        if not (user.is_superuser or (
+            hasattr(user, 'teacher_profile') and
+            user.teacher_profile.subjects.filter(pk=subject.pk).exists()
+        )):
+            raise Http404("Предмет скрыт или недоступен")
+
     materials = Material.objects.filter(
         subject=subject, is_published=True
     ).select_related("author", "subject")
@@ -92,6 +108,16 @@ def material_detail(request, slug, material_slug):
                         .prefetch_related("attachments", "links"),
         subject__slug=slug, slug=material_slug, is_published=True,
     )
+
+    # ==== ДОБАВЛЕНО: проверка is_hidden у предмета материала ====
+    if material.subject.is_hidden:
+        user = request.user
+        if not (user.is_superuser or (
+            hasattr(user, 'teacher_profile') and
+            user.teacher_profile.subjects.filter(pk=material.subject.pk).exists()
+        )):
+            raise Http404("Материал скрыт или недоступен")
+
     return render(request, "portal/material.html", {"material": material})
 
 
@@ -117,7 +143,6 @@ def teachers_list(request):
             q_filter |= Q(last_name__istartswith=ch)
         teachers = teachers.filter(q_filter)
 
-    # Алфавитные диапазоны — только по фамилиям, пустые не показываем
     ranges = [("А", "В"), ("Г", "Ж"), ("З", "К"), ("Л", "Н"),
               ("О", "Р"), ("С", "У"), ("Ф", "Ч"), ("Ш", "Я")]
     letters_in_use = set(
@@ -141,11 +166,12 @@ def teacher_home(request, code):
     teacher = get_object_or_404(
         TeacherProfile.objects.prefetch_related("subjects"), code=code
     )
+    # Публичные материалы — только не скрытые предметы
     base = teacher.materials.filter(
         is_published=True, subject__is_hidden=False
     ).select_related("subject")
 
-    # Счётчик ОПУБЛИКОВАННЫХ материалов ЭТОГО препода по каждому предмету
+    # Для публичной страницы показываем только не скрытые предметы преподавателя
     public_subjects = list(teacher.subjects.filter(is_hidden=False))
     counts = dict(
         base.values_list("subject_id")
@@ -155,7 +181,7 @@ def teacher_home(request, code):
     for s in public_subjects:
         s.pub_count = counts.get(s.id, 0)
 
-    view_mode = request.GET.get("view", "recent")  # 'recent' или 'all'
+    view_mode = request.GET.get("view", "recent")
     return render(request, "teacher/home.html", {
         "teacher": teacher,
         "recent": base.order_by("-created_at")[:6],
@@ -168,8 +194,19 @@ def teacher_home(request, code):
 def teacher_subject(request, code, subject_slug):
     teacher = get_object_or_404(TeacherProfile, code=code)
     subject = get_object_or_404(Subject, slug=subject_slug)
+
+    # Проверяем, что предмет принадлежит преподавателю и не скрыт (или доступен для публики)
     if not teacher.subjects.filter(pk=subject.pk).exists():
         return render(request, "404.html", status=404)
+
+    # ==== ДОБАВЛЕНО: если предмет скрыт, доступ только для авторизованных преподавателей (или суперпользователя) ====
+    if subject.is_hidden:
+        user = request.user
+        if not (user.is_superuser or (
+            hasattr(user, 'teacher_profile') and
+            user.teacher_profile.subjects.filter(pk=subject.pk).exists()
+        )):
+            raise Http404("Предмет скрыт")
 
     materials = Material.objects.filter(
         author=teacher, subject=subject, is_published=True
@@ -210,6 +247,7 @@ def search(request):
 # Вход на портал
 # ------------------------------------------------------------------
 
+@axes_dispatch
 def portal_login(request):
     """Единая страница входа: админ → админка, преподаватель → кабинет."""
     if request.user.is_authenticated:
@@ -242,14 +280,12 @@ def get_teacher(request):
 
 @teacher_required
 def desk_home(request):
-    """Простой кабинет преподавателя: список его материалов + кнопка публикации."""
     teacher = get_teacher(request)
     if not teacher:
         messages.error(request, "У вашей учётной записи нет профиля преподавателя. "
                                 "Обратитесь к администратору портала.")
         return redirect("portal_home")
     materials = teacher.materials.select_related("subject")
-    # Пустая форма нужна для {{ form.media }} в base.html
     form = TeacherMaterialForm(teacher=teacher)
     return render(request, "desk/home.html", {
         "teacher": teacher,
@@ -260,7 +296,6 @@ def desk_home(request):
 
 @teacher_required
 def desk_material_new(request):
-    """Публикация нового материала — минимум действий."""
     teacher = get_teacher(request)
     if not teacher:
         return redirect("portal_home")
@@ -298,10 +333,8 @@ def desk_material_new(request):
 
 @teacher_required
 def desk_material_edit(request, pk):
-    """Редактирование своего материала."""
     teacher = get_teacher(request)
     material = get_object_or_404(Material, pk=pk)
-    # Чужой материал редактировать нельзя (суперюзеру — можно)
     if not request.user.is_superuser and (not teacher or material.author != teacher):
         return redirect("desk_home")
 
@@ -325,7 +358,6 @@ def desk_material_edit(request, pk):
 
 @teacher_required
 def desk_material_toggle(request, pk):
-    """Быстрое снятие с публикации / публикация."""
     teacher = get_teacher(request)
     material = get_object_or_404(Material, pk=pk)
     if not request.user.is_superuser and material.author != teacher:
@@ -337,7 +369,6 @@ def desk_material_toggle(request, pk):
 
 @teacher_required
 def desk_password(request):
-    """Смена пароля прямо в кабинете — без админки."""
     teacher = get_teacher(request)
     if not teacher:
         return redirect("portal_home")
@@ -346,14 +377,13 @@ def desk_password(request):
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
             user = form.save()
-            update_session_auth_hash(request, user)  # чтобы не выкинуло из сессии
+            update_session_auth_hash(request, user)
             messages.success(request, "Пароль изменён! "
                                       "Используйте новый при следующем входе.")
             return redirect("desk_home")
     else:
         form = PasswordChangeForm(request.user)
 
-    # Пустая форма материала нужна для {{ form.media }} в base.html
     material_form = TeacherMaterialForm(teacher=teacher)
     return render(request, "desk/password.html", {
         "teacher": teacher,
@@ -363,6 +393,5 @@ def desk_password(request):
 
 @require_POST
 def desk_logout(request):
-    """Выход из кабинета — только POST, после выхода на главную."""
     auth_logout(request)
     return redirect("portal_home")

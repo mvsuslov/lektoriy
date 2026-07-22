@@ -4,8 +4,37 @@ from django.utils.text import slugify
 from django_ckeditor_5.fields import CKEditor5Field
 from django.core.exceptions import ValidationError
 import re
+import magic                                     # <-- ДОБАВЛЕНО
+from mimetypes import guess_type                # <-- ДОБАВЛЕНО (запасной вариант)
 
 MAX_FILE_SIZE = 1.5 * 1024 * 1024  # 2 МБ — поменяете число, когда будет нужно
+
+# ==== ДОБАВЛЕНО: список разрешённых MIME-типов для Attachment ====
+ALLOWED_ATTACHMENT_MIMES = {
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',  # docx
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation', # pptx
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',        # xlsx
+    'image/png',
+    'image/jpeg',
+    'image/gif',
+    'image/webp',
+    'application/zip',
+    'application/x-rar-compressed',
+    'application/x-7z-compressed',
+    'application/x-tar',
+    'application/gzip',
+}
+
+# ==== ДОБАВЛЕНО: список разрешённых расширений для Attachment ====
+ALLOWED_ATTACHMENT_EXTENSIONS = {
+    '.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx',
+    '.png', '.jpg', '.jpeg', '.gif', '.webp',
+    '.zip', '.rar', '.7z', '.tar', '.gz',
+}
 
 
 def validate_file_size(file):
@@ -17,11 +46,53 @@ def validate_file_size(file):
         )
 
 
+# ==== ДОБАВЛЕНО: валидация типа файла для Attachment ====
+def validate_attachment_file(file):
+    """
+    Проверяет, что файл имеет разрешённый MIME-тип и расширение.
+    """
+    # Проверка расширения
+    ext = '.' + file.name.split('.')[-1].lower()
+    if ext not in ALLOWED_ATTACHMENT_EXTENSIONS:
+        raise ValidationError(f"Недопустимый тип файла. Разрешены: {', '.join(ALLOWED_ATTACHMENT_EXTENSIONS)}")
+
+    # Проверка MIME-типа через magic (или fallback)
+    try:
+        # читаем первые 2048 байт для определения MIME
+        file.seek(0)
+        mime = magic.from_buffer(file.read(2048), mime=True)
+        file.seek(0)
+    except (ImportError, AttributeError):
+        # если magic не установлен, используем guess_type по расширению
+        mime, _ = guess_type(file.name)
+        if mime is None:
+            mime = 'application/octet-stream'
+
+    if mime not in ALLOWED_ATTACHMENT_MIMES:
+        raise ValidationError(
+            f"Недопустимый MIME-тип ({mime}). "
+            "Загружайте только документы, изображения или архивы."
+        )
+
+
 def validate_html_file(file):
     """Проверка, что загружается HTML-файл (для интерактивных моделей)."""
     validate_file_size(file)
+
+    # Проверка расширения
     if not file.name.lower().endswith(('.html', '.htm')):
         raise ValidationError("Модель должна быть HTML-файлом (.html)")
+
+    # ==== ДОБАВЛЕНО: проверка, что это действительно HTML ====
+    try:
+        file.seek(0)
+        content = file.read(1024).decode('utf-8', errors='ignore')
+        file.seek(0)
+        # Простая проверка: наличие <html или <!DOCTYPE
+        if '<html' not in content.lower() and '<!doctype' not in content.lower():
+            raise ValidationError("Файл не похож на HTML. Убедитесь, что это корректный HTML-документ.")
+    except Exception:
+        raise ValidationError("Не удалось прочитать файл. Убедитесь, что это текстовый HTML-файл.")
 
 
 class Direction(models.Model):
@@ -37,9 +108,9 @@ class Direction(models.Model):
     def __str__(self):
         return self.name
 
+
 SUBJECT_EMOJIS = [
     ('', '— без эмодзи —'),
-    # Школьные предметы
     ('📐', '📐 Математика'),
     ('➗', '➗ Алгебра'),
     ('📏', '📏 Геометрия'),
@@ -62,7 +133,6 @@ SUBJECT_EMOJIS = [
     ('🔭', '🔭 Астрономия'),
     ('🤖', '🤖 Робототехника'),
     ('🧮', '🧮 Олимпиадная математика'),
-    # Языки программирования и технологии
     ('🐍', '🐍 Python'),
     ('☕', '☕ Java'),
     ('⚡', '⚡ C++'),
@@ -84,15 +154,11 @@ SUBJECT_EMOJIS = [
     ('🎮', '🎮 Разработка игр'),
 ]
 
+
 class Subject(models.Model):
     def icon_bg_color(self):
-        """Насыщенный цвет предмета (hex).
-        Использование в шаблонах (как в прототипе):
-        - фон иконки:  style="background:{{ s.icon_bg_color }}18"  (10% прозрачности)
-        - текст счётчика/тега: style="color:{{ s.icon_bg_color }}" (насыщенный)
-        """
+        """Насыщенный цвет предмета (hex)."""
         name_lower = self.name.lower()
-
         predefined = {
             'физика': '#2563EB',
             'python': '#16A34A',
@@ -112,13 +178,9 @@ class Subject(models.Model):
             'веб': '#0D9488',
             'java': '#EA580C',
         }
-
         for key, color in predefined.items():
             if key in name_lower:
                 return color
-
-        # Для остальных — цвет из палитры по хешу имени
-        # (всегда одинаковый для одного предмета, всегда hex — чтобы работал суффикс 18)
         import hashlib
         palette = [
             '#2563EB', '#16A34A', '#7C3AED', '#0891B2', '#DC2626',
@@ -127,7 +189,6 @@ class Subject(models.Model):
         hash_val = int(hashlib.md5(self.name.encode()).hexdigest()[:6], 16)
         return palette[hash_val % len(palette)]
 
-    """Предмет. Привязан к направлению, может быть скрытым."""
     name = models.CharField("Название", max_length=100)
     slug = models.SlugField("Адрес (slug)", unique=True)
     direction = models.ForeignKey(
@@ -161,7 +222,6 @@ class Subject(models.Model):
 
 
 class TeacherProfile(models.Model):
-    """Профиль преподавателя. Один-к-одному с пользователем."""
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
         related_name="teacher_profile", verbose_name="Пользователь"
@@ -214,27 +274,22 @@ class TeacherProfile(models.Model):
         return f"{self.last_name} {self.first_name} {self.middle_name}"
 
     def display_name(self):
-        """Полное отображаемое имя (с учётом переключателя)."""
         if self.show_last_name:
             return f"{self.first_name} {self.middle_name} {self.last_name}"
         return f"{self.first_name} {self.middle_name} {self.last_name[0]}."
 
     def short_name(self):
-        """Компактный формат для карточек и фильтров."""
         return f"{self.first_name} {self.middle_name} {self.last_name[0]}."
 
     def initials(self):
         return f"{self.first_name[0]}{self.middle_name[0]}"
 
     def headline_html(self):
-        """Заголовок с акцентами: [слово] → <span style="color:var(--accent)">слово</span>"""
         if not self.brand_headline:
             return ""
         text = self.brand_headline
-        # Экранируем HTML для безопасности
         import html
         text = html.escape(text)
-        # Заменяем [текст] на span с акцентным цветом
         text = re.sub(
             r'\[([^\]]+)\]',
             r'<span style="color:var(--accent)">\1</span>',
@@ -259,7 +314,6 @@ class Material(models.Model):
         INTERACTIVE = "interactive", "Интерактив"
         ARTICLE = "article", "Статья"
 
-    # Цвета бейджей типов (как в прототипе)
     TYPE_COLORS = {
         "lesson": ("#2563EB", "#EFF6FF"),
         "practice": ("#7C3AED", "#F5F3FF"),
@@ -314,11 +368,9 @@ class Material(models.Model):
         return self.title
 
     def type_color(self):
-        """Насыщенный цвет бейджа типа материала."""
         return self.TYPE_COLORS.get(self.type, ("#2563EB", "#EFF6FF"))[0]
 
     def type_bg(self):
-        """Бледный фон бейджа типа материала."""
         return self.TYPE_COLORS.get(self.type, ("#2563EB", "#EFF6FF"))[1]
 
     def save(self, *args, **kwargs):
@@ -333,12 +385,15 @@ class Material(models.Model):
 
 
 class Attachment(models.Model):
-    """Файл, прикреплённый к материалу."""
     material = models.ForeignKey(
         Material, on_delete=models.CASCADE,
         related_name="attachments", verbose_name="Материал"
     )
-    file = models.FileField("Файл", upload_to=attachment_path, validators=[validate_file_size])
+    file = models.FileField(
+        "Файл",
+        upload_to=attachment_path,
+        validators=[validate_file_size, validate_attachment_file]   # <-- ДОБАВЛЕН ВТОРОЙ ВАЛИДАТОР
+    )
     title = models.CharField("Название для отображения", max_length=200, blank=True)
 
     class Meta:
@@ -353,7 +408,6 @@ class Attachment(models.Model):
 
 
 class Link(models.Model):
-    """Полезная ссылка, прикреплённая к материалу."""
     material = models.ForeignKey(
         Material, on_delete=models.CASCADE,
         related_name="links", verbose_name="Материал"
