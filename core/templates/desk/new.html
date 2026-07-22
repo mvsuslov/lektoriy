@@ -59,6 +59,29 @@
     {% for e in form.content.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
   </div>
 
+  <!-- Блок видео -->
+  <div class="f-section">
+    <h3>▶️ Видео (необязательно)</h3>
+    <div class="f-hint">Ссылка на YouTube, RuTube или VK Видео — плеер появится на странице материала</div>
+    <div class="f-group">
+      {{ form.video_url }}
+      {% for e in form.video_url.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+    </div>
+  </div>
+
+  <!-- ====== НОВЫЙ БЛОК: Интерактив (код встраивания) ====== -->
+  <div class="f-section">
+    <h3>🕹 Интерактив (код встраивания)</h3>
+    <div class="f-hint">
+      Вставьте iframe-код с PhET, GeoGebra, интерактивной модели или другого сервиса.<br>
+      Например: <code>&lt;iframe src="https://phet.colorado.edu/sims/html/..." width="100%" height="400"&gt;&lt;/iframe&gt;</code>
+    </div>
+    <div class="f-group">
+      {{ form.embed_code }}
+      {% for e in form.embed_code.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+    </div>
+  </div>
+
   {% if not editing %}
   <div class="f-section">
     <h3>📎 Файл (необязательно)</h3>
@@ -84,15 +107,6 @@
     </div>
   </div>
   {% endif %}
-
-  <div class="f-section">
-    <h3>▶️ Видео (необязательно)</h3>
-    <div class="f-hint">Ссылка на YouTube, RuTube или VK Видео — плеер появится на странице материала</div>
-    <div class="f-group">
-      {{ form.video_url }}
-      {% for e in form.video_url.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
-    </div>
-  </div>
 
   <div style="margin-top:26px;display:flex;gap:12px;flex-wrap:wrap">
     <button type="submit" class="btn">{% if editing %}Сохранить изменения{% else %}Опубликовать{% endif %}</button>
