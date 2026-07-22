@@ -5,23 +5,33 @@
 <div class="card" style="max-width:500px;margin:60px auto;text-align:center;padding:36px;">
   <div style="font-size:48px;margin-bottom:12px;">🔒</div>
   <h1 style="font-size:24px;margin-bottom:10px;">Доступ временно ограничен</h1>
+
   <p style="color:var(--muted);font-size:15px;margin-bottom:6px;">
     Слишком много неудачных попыток входа.
   </p>
-  <p style="color:var(--muted);font-size:15px;">
-    Попробуйте снова через
-    <strong>{{ cooloff_time|seconds_to_human }}</strong>.
+
+  <p style="color:var(--text);font-size:16px;font-weight:700;margin:20px 0;">
+    {% if cooloff_time %}
+      Попробуйте снова через <strong style="color:var(--accent);">{{ cooloff_time|seconds_to_human }}</strong>
+    {% else %}
+      Попробуйте снова позже
+    {% endif %}
   </p>
+
   <p style="color:var(--muted);font-size:13px;margin-top:18px;">
-    Вы будете перенаправлены на главную через <span id="countdown">5</span> секунд.
+    Вы будете перенаправлены на главную через <span id="countdown">5</span> {{ countdown_word }}
   </p>
+
   <a href="{% url 'portal_home' %}" class="btn" style="margin-top:20px;display:inline-block;">
     Перейти на главную сейчас
   </a>
 </div>
+
 <script>
   let seconds = 5;
   const el = document.getElementById('countdown');
+  const words = ['секунду', 'секунды', 'секунды', 'секунды', 'секунд'];
+
   const timer = setInterval(() => {
     seconds--;
     if (seconds <= 0) {
@@ -29,6 +39,11 @@
       window.location.href = "{% url 'portal_home' %}";
     } else {
       el.textContent = seconds;
+      // Склоняем "секунд" правильно
+      let word = 'секунд';
+      if (seconds === 1) word = 'секунду';
+      else if (seconds >= 2 && seconds <= 4) word = 'секунды';
+      el.nextSibling.textContent = ' ' + word;
     }
   }, 1000);
 </script>

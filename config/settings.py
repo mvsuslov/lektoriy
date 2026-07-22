@@ -40,7 +40,7 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
 # ==== django-axes (брутфорс) ====
 AXES_ENABLED = True
 AXES_FAILURE_LIMIT = 3
-AXES_COOLOFF_TIME = 120                        # 3 часа = 10800 сек
+AXES_COOLOFF_TIME = 120  # 3 часа (было 120 сек = 2 мин!)
 AXES_LOCKOUT_TEMPLATE = 'axes/lockout.html'
 AXES_VERBOSE = True
 AXES_LOCKOUT_PARAMETERS = ['ip_address']
