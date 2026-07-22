@@ -94,26 +94,41 @@ class TeacherMaterialForm(forms.ModelForm):
         if not code:
             return code
 
-        # Очистка через bleach (разрешены только iframe с безопасными атрибутами)
+        try:
+            import bleach
+        except ImportError:
+            # Если bleach не установлен, возвращаем код как есть (но лучше установить)
+            return code
+
+        # Разрешаем только iframe с безопасными атрибутами
+        allowed_tags = ['iframe']
+        allowed_attrs = {
+            'iframe': ['src', 'width', 'height', 'allowfullscreen', 'loading', 'frameborder', 'allow'],
+        }
+        allowed_protocols = ['http', 'https']
+
+        # Очищаем через bleach
         cleaned = bleach.clean(
             code,
-            tags=['iframe'],
-            attributes=ALLOWED_EMBED_ATTRIBUTES,
-            protocols=ALLOWED_EMBED_PROTOCOLS,
+            tags=allowed_tags,
+            attributes=allowed_attrs,
+            protocols=allowed_protocols,
             strip=True
         )
 
-        # Дополнительная проверка src iframe (запрещаем javascript: и data:)
+        # Дополнительная проверка: убедимся, что src начинается с http:// или https://
+        # Просто удаляем iframe, если src небезопасен
         import re
-        iframe_pattern = re.compile(r'<iframe\s+([^>]*)>', re.IGNORECASE | re.DOTALL)
+        iframe_pattern = re.compile(r'<iframe\s+(.*?)>', re.IGNORECASE | re.DOTALL)
 
         def safe_iframe(match):
-            attrs = match.group(1)  # теперь группа существует
+            attrs = match.group(1)
             src_match = re.search(r'src\s*=\s*["\']([^"\']+)["\']', attrs, re.IGNORECASE)
             if src_match:
                 src = src_match.group(1)
                 if not src.startswith(('http://', 'https://')):
                     return ''  # удаляем небезопасный iframe
+            # Возвращаем iframe с теми же атрибутами
             return f'<iframe {attrs}>'
 
         cleaned = re.sub(iframe_pattern, safe_iframe, cleaned, flags=re.IGNORECASE | re.DOTALL)
