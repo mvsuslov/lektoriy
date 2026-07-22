@@ -38,16 +38,16 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440        # 2.5 МБ
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
 
 # ==== django-axes (брутфорс) ====
+# ВНИМАНИЕ: AXES_COOLOFF_TIME задаётся в ЧАСАХ, а не в секундах!
 AXES_ENABLED = True
 AXES_FAILURE_LIMIT = 3
-AXES_COOLOFF_TIME = 120  # 3 часа (было 120 сек = 2 мин!)
+AXES_COOLOFF_TIME = 3                        # 3 часа блокировки
 AXES_LOCKOUT_TEMPLATE = 'axes/lockout.html'
 AXES_VERBOSE = True
 AXES_LOCKOUT_PARAMETERS = ['ip_address']
 AXES_RESET_ON_SUCCESS = True
 AXES_DISABLE_ACCESS_LOG = False
 AXES_META_PRECEDENCE_ORDER = ('HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR')
-AXES_IPWARE_CLASS = 'ipware.ip.get_ip'
 
 # Application definition
 
@@ -88,6 +88,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.portal_menu',
+                'core.context_processors.axes_cooloff',
             ],
         },
     },
