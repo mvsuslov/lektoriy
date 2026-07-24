@@ -1,5 +1,8 @@
+import json
+
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.utils.safestring import mark_safe
 
 from .models import (Attachment, Direction, Link, Material, Subject,
                      TeacherProfile)
@@ -9,6 +12,99 @@ User = get_user_model()
 
 def is_super(user):
     return user.is_superuser
+
+
+# ============ Генератор случайного slug для скрытых предметов ============
+SLUG_GENERATOR_JS = mark_safe("""
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const slugInput = document.getElementById('id_slug');
+    if (!slugInput) return;
+
+    // --- Генератор: k7x2-m9f4-p3q8 (3 группы по 4 символа) ---
+    function generateSlug() {
+        // Без l, o, 0, 1 — чтобы не путать при диктовке по телефону
+        const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+        const group = () => Array.from({length: 4}, () =>
+            chars[Math.floor(Math.random() * chars.length)]).join('');
+        return group() + '-' + group() + '-' + group();
+    }
+
+    // --- Контейнер для кнопок под полем slug ---
+    const btnBox = document.createElement('div');
+    btnBox.style.cssText = 'margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;';
+
+    const genBtn = document.createElement('button');
+    genBtn.type = 'button';
+    genBtn.textContent = '\\u{1F3B2} Сгенерировать';
+    genBtn.className = 'button';
+    genBtn.style.cssText = 'padding:6px 14px;font-size:13px;';
+    genBtn.title = 'Случайный адрес — для частных занятий';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.textContent = '\\u{1F4CB} Копировать ссылку';
+    copyBtn.className = 'button';
+    copyBtn.style.cssText = 'padding:6px 14px;font-size:13px;';
+
+    const copied = document.createElement('span');
+    copied.style.cssText = 'color:#16A34A;font-size:13px;font-weight:600;display:none;';
+    copied.textContent = '\\u2713 Скопировано!';
+
+    btnBox.appendChild(genBtn);
+    btnBox.appendChild(copyBtn);
+    btnBox.appendChild(copied);
+    slugInput.parentNode.appendChild(btnBox);
+
+    genBtn.addEventListener('click', function() {
+        slugInput.value = generateSlug();
+        copied.style.display = 'none';
+        slugInput.style.background = '#F0FDF4';
+        setTimeout(() => { slugInput.style.background = ''; }, 600);
+    });
+
+    copyBtn.addEventListener('click', function() {
+        const slug = slugInput.value.trim();
+        if (!slug) {
+            alert('Сначала введите или сгенерируйте адрес!');
+            return;
+        }
+        const url = 'https://phys-it.ru/subjects/' + slug + '/';
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(showCopied);
+        } else {
+            const tmp = document.createElement('textarea');
+            tmp.value = url;
+            document.body.appendChild(tmp);
+            tmp.select();
+            document.execCommand('copy');
+            document.body.removeChild(tmp);
+            showCopied();
+        }
+
+        function showCopied() {
+            copied.style.display = 'inline';
+            setTimeout(() => { copied.style.display = 'none'; }, 2500);
+        }
+    });
+
+    // --- АВТОГЕНЕРАЦИЯ: галочка "Скрытый предмет" ---
+    const hiddenCheckbox = document.getElementById('id_is_hidden');
+    if (hiddenCheckbox) {
+        hiddenCheckbox.addEventListener('change', function() {
+            // Заполняем случайным адресом, только если поле ПУСТОЕ
+            // (не затираем существующий slug)
+            if (this.checked && !slugInput.value.trim()) {
+                slugInput.value = generateSlug();
+                slugInput.style.background = '#F0FDF4';
+                setTimeout(() => { slugInput.style.background = ''; }, 600);
+            }
+        });
+    }
+});
+</script>
+""")
 
 
 # ============ Направления — только суперпользователь ============
@@ -40,12 +136,28 @@ class SubjectAdmin(admin.ModelAdmin):
     list_filter = ("direction", "is_hidden")
     list_editable = ("order",)
     prepopulated_fields = {"slug": ("name",)}
+    readonly_fields = ("slug_tools",)
+
+    fields = ("name", "slug", "slug_tools", "direction", "icon",
+              "description", "is_hidden", "order")
+
+    @admin.display(description="")
+    def slug_tools(self, obj):
+        return SLUG_GENERATOR_JS
 
     def get_readonly_fields(self, request, obj=None):
         # Скрытие предмета — только суперпользователь
         if not is_super(request.user):
-            return ("is_hidden",)
-        return ()
+            return ("is_hidden", "slug_tools")
+        return ("slug_tools",)
+
+    def get_fields(self, request, obj=None):
+        fields = list(super().get_fields(request, obj))
+        # Убираем служебное поле slug_tools из формы для не-суперпользователей
+        # (кнопки нужны только админу — он и создаёт предметы)
+        if not is_super(request.user) and "slug_tools" in fields:
+            fields.remove("slug_tools")
+        return fields
 
     def has_add_permission(self, request):
         return is_super(request.user)
@@ -106,7 +218,6 @@ class MaterialAdmin(admin.ModelAdmin):
                 obj.author = profile
             else:
                 # суперпользователь без профиля — берём первый профиль
-                # (или создайте себе TeacherProfile, см. инструкцию)
                 obj.author = TeacherProfile.objects.first()
         super().save_model(request, obj, form, change)
 
