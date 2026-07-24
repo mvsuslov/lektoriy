@@ -10,13 +10,12 @@
   header nav{display:none}
   header .search{display:none}
 
-  /* Бургер уже есть в base.html — показываем его */
-
   /* Мобильное меню преподавателя */
   .teacher-nav-mobile{
     display:block;
     position:fixed;
-    top:64px;
+    /* Верхняя полоса ~30px + шапка 64px = 94px */
+    top:94px;
     bottom:0;
     left:0;
     right:0;
@@ -26,12 +25,14 @@
     padding:18px 20px 48px;
     transform:translateX(-100%);
     transition:transform .25s;
-    z-index:49;
+    /* Ниже чем шапка (z-index:50), чтобы бургер оставался кликабельным */
+    z-index:45;
   }
   .teacher-nav-mobile.open{transform:translateX(0)}
 
   .teacher-nav-mobile .mobile-search{
     margin-bottom:18px;
+    position:relative;
   }
   .teacher-nav-mobile .mobile-search input{
     width:100%;
@@ -47,9 +48,6 @@
     border-color:var(--accent);
     box-shadow:0 0 0 3px var(--accent-soft);
     background:#fff;
-  }
-  .teacher-nav-mobile .mobile-search{
-    position:relative;
   }
   .teacher-nav-mobile .mobile-search::before{
     content:'🔍';
