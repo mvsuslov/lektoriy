@@ -2,7 +2,11 @@
 {% block content %}
 <div class="crumb">
   <a href="{% url 'portal_home' %}">Лекторий</a> /
-  {% if subject.is_hidden %}{{ subject.name }}{% else %}<a href="{% url 'all_subjects' %}">Предметы</a> / {{ subject.name }}{% endif %}
+  {% if subject.is_hidden %}
+    Личные материалы
+  {% else %}
+    <a href="{% url 'all_subjects' %}">Предметы</a> / {{ subject.name }}
+  {% endif %}
 </div>
 
 <div style="display:flex;gap:16px;align-items:center;margin:6px 0 4px">
@@ -14,7 +18,7 @@
 </div>
 
 {% if subject.is_hidden %}
-<div class="hidden-note">🔗 Этот раздел доступен только по прямой ссылке</div>
+<div class="hidden-note">🔖 Это ваша персональная страница с материалами. Сохраните ссылку в закладки — она понадобится для входа.</div>
 {% endif %}
 
 {% if teachers %}
@@ -55,7 +59,9 @@
   <a class="mat-card" href="{% url 'material_detail' m.subject.slug m.slug %}">
     <div class="mat-top">
       <span class="badge" style="color:{{ m.type_color }};background:{{ m.type_bg }}">{{ m.get_type_display }}</span>
+      {% if not m.subject.is_hidden %}
       <span class="cat-tag" style="color:{{ m.subject.icon_bg_color }}">{{ m.subject.icon }} {{ m.subject.name }}</span>
+      {% endif %}
       <span class="mat-date">{{ m.created_at|date:"d.m.Y" }}</span>
     </div>
     <h3>{{ m.title }}</h3>

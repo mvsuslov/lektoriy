@@ -40,14 +40,20 @@
 {% block content %}
 <div class="crumb">
   <a href="{% url 'portal_home' %}">Лекторий</a> /
-  <a href="{% url 'subject_detail' material.subject.slug %}">{{ material.subject.name }}</a> /
+  {% if material.subject.is_hidden %}
+    <a href="{% url 'subject_detail' material.subject.slug %}">Личные материалы</a> /
+  {% else %}
+    <a href="{% url 'subject_detail' material.subject.slug %}">{{ material.subject.name }}</a> /
+  {% endif %}
   {{ material.title }}
 </div>
 
 <article class="article">
   <div class="mat-top">
     <span class="badge" style="color:{{ material.type_color }};background:{{ material.type_bg }}">{{ material.get_type_display }}</span>
+    {% if not material.subject.is_hidden %}
     <span class="cat-tag" style="color:{{ material.subject.icon_bg_color }}">{{ material.subject.icon }} {{ material.subject.name }}</span>
+    {% endif %}
     <span class="mat-date">{{ material.created_at|date:"d.m.Y" }}</span>
   </div>
   <h1>{{ material.title }}</h1>
