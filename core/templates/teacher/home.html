@@ -1,6 +1,91 @@
 {% extends "base.html" %}
 {% load ru_plural %}
 {% block title %}{{ teacher.display_name }} — Лекторий{% endblock %}
+{% block extra_css %}
+/* ================= МОБИЛЬНАЯ ШАПКА ПРЕПОДАВАТЕЛЯ ================= */
+.teacher-nav-mobile{display:none}
+
+@media(max-width:860px){
+  /* Прячем десктопное меню предметов и поиск */
+  header nav{display:none}
+  header .search{display:none}
+
+  /* Бургер уже есть в base.html — показываем его */
+
+  /* Мобильное меню преподавателя */
+  .teacher-nav-mobile{
+    display:block;
+    position:fixed;
+    top:64px;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#fff;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:18px 20px 48px;
+    transform:translateX(-100%);
+    transition:transform .25s;
+    z-index:49;
+  }
+  .teacher-nav-mobile.open{transform:translateX(0)}
+
+  .teacher-nav-mobile .mobile-search{
+    margin-bottom:18px;
+  }
+  .teacher-nav-mobile .mobile-search input{
+    width:100%;
+    padding:12px 16px 12px 38px;
+    border:1px solid var(--border);
+    border-radius:11px;
+    font:inherit;
+    font-size:15px;
+    background:var(--bg);
+    outline:none;
+  }
+  .teacher-nav-mobile .mobile-search input:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft);
+    background:#fff;
+  }
+  .teacher-nav-mobile .mobile-search{
+    position:relative;
+  }
+  .teacher-nav-mobile .mobile-search::before{
+    content:'🔍';
+    position:absolute;
+    left:13px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:14px;
+    opacity:.6;
+  }
+
+  .teacher-nav-mobile h4{
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.7px;
+    color:var(--muted);
+    margin:16px 0 8px;
+  }
+  .teacher-nav-mobile a{
+    display:block;
+    padding:12px 14px;
+    border:1px solid var(--border);
+    border-radius:11px;
+    margin-bottom:8px;
+    color:var(--text);
+    font-size:15px;
+    font-weight:600;
+  }
+  .teacher-nav-mobile a:hover{
+    background:var(--accent-soft);
+    color:var(--accent);
+    border-color:var(--accent);
+  }
+}
+{% endblock %}
+
 {% block header %}
 <div style="background:var(--accent-soft);font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)">
   <div class="container"><a href="{% url 'portal_home' %}" style="font-weight:600">← Лекторий — все предметы портала</a></div>
@@ -13,6 +98,8 @@
       </span>
       {% if teacher.brand_title %}{{ teacher.brand_title }}{% else %}{{ teacher.display_name }}{% endif %}
     </a>
+
+    {# Десктопное меню — скрывается на мобильном через CSS #}
     <nav>
       {% for s in public_subjects %}
       <a href="{% url 'teacher_subject' teacher.code s.slug %}">{{ s.icon }} {{ s.name }}</a>
@@ -21,9 +108,32 @@
     <form class="search" action="{% url 'search' %}" method="get">
       <input name="q" placeholder="Поиск…">
     </form>
+
+    {# Бургер для мобильного меню (тот же ID что в base.html — JS уже работает) #}
+    <button class="burger" id="burgerBtn" aria-label="Меню">
+      <span class="ic-open">☰</span>
+      <span class="ic-close">✕</span>
+    </button>
   </div>
 </header>
+
+{# Мобильное меню — открывается по клику на бургер #}
+<div class="teacher-nav-mobile" id="megaPanel">
+  <form class="mobile-search" action="{% url 'search' %}" method="get">
+    <input name="q" placeholder="Поиск материалов…">
+  </form>
+
+  <h4>Предметы</h4>
+  {% for s in public_subjects %}
+  <a href="{% url 'teacher_subject' teacher.code s.slug %}">{{ s.icon }} {{ s.name }}</a>
+  {% endfor %}
+
+  <h4>Навигация</h4>
+  <a href="{% url 'portal_home' %}">🏠 Главная Лектория</a>
+  <a href="{% url 'teachers_list' %}">👤 Все преподаватели</a>
+</div>
 {% endblock %}
+
 {% block content %}
 <section style="padding:46px 0 8px">
   <h1 style="font-size:clamp(24px,4vw,34px);font-weight:800;line-height:1.25;letter-spacing:-.5px;max-width:720px">
@@ -42,7 +152,8 @@
   </div>
 </section>
 
-<div class="section-title"><h2>Предметы</h2></div><div class="cats">
+<div class="section-title"><h2>Предметы</h2></div>
+<div class="cats">
   {% for s in public_subjects %}
   <a class="cat-card" href="{% url 'teacher_subject' teacher.code s.slug %}">
     <div class="cat-icon" style="background:{{ s.icon_bg_color }}18">{{ s.icon }}</div>
