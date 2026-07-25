@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ material.title }} — Лекторий{% endblock %}
-{% block extra_css %}
+{{% block extra_css %}
 .article{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:clamp(22px,4vw,44px)}
 .article h1{font-size:clamp(22px,3vw,29px);line-height:1.25;margin:10px 0 4px}
 .article .body{margin-top:18px;font-size:15.5px;line-height:1.7;overflow-wrap:break-word}
@@ -9,7 +9,7 @@
 .article .body p{margin-bottom:1em}
 .article .body ul,.article .body ol{margin-left:1.5em;margin-bottom:1em}
 .article .body li{margin-bottom:0.5em}
-.article .body table{border-collapse:collapse;width:100%;margin:1.2em 0;font-size:14px}
+.article .body table{border-collapse:collapse;width:auto;min-width:100%;margin:1.2em 0;font-size:14px}
 .article .body th,.article .body td{border:1px solid var(--border);padding:10px 14px;text-align:left;vertical-align:top}
 .article .body th{background:var(--bg);font-weight:600}
 .article .body tr:nth-child(even){background:var(--bg)}
@@ -22,7 +22,7 @@
 
 /* ===== Таблицы: горизонтальный скролл на узких экранах ===== */
 .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:1.2em 0;border:1px solid var(--border);border-radius:10px}
-.table-scroll table{margin:0;border:none;width:auto;min-width:100%}
+.table-scroll table{margin:0;border:none;min-width:100%;width:auto}
 .table-scroll th,.table-scroll td{white-space:nowrap}
 /* Тени-подсказки «можно листать», исчезают по краям прокрутки */
 .table-scroll{background:
