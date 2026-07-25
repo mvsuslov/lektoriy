@@ -1,211 +1,150 @@
-{% load static %}
-{% load ru_plural %}
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block title %}Лекторий — учебный портал{% endblock %}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#F8FAFC;--surface:#fff;--text:#1E293B;--muted:#64748B;--accent:#4F46E5;--accent-soft:#EEF2FF;--border:#E2E8F0}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Golos Text',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;display:flex;flex-direction:column;min-height:100vh}
-body.menu-open{overflow:hidden}
-a{color:var(--accent);text-decoration:none}
-main{flex:1;width:100%}
-.container{max-width:1080px;margin:0 auto;padding:0 20px}
-#topbar{position:sticky;top:0;z-index:50}
-header{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
-.header-inner{display:flex;align-items:center;gap:8px;height:64px}
-.logo{font-weight:800;font-size:18px;color:var(--text);display:flex;align-items:center;gap:9px;white-space:nowrap;margin-right:10px}
-.logo-badge{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#4F46E5,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:17px;color:#fff}
-nav{display:flex;gap:4px}
-nav a,.navlink{color:var(--muted);font-weight:600;font-size:14.5px;padding:7px 12px;border-radius:9px;transition:.15s;white-space:nowrap}
-nav a:hover,.navlink:hover{background:var(--accent-soft);color:var(--accent)}
-.subjects-btn{background:none;border:none;font:inherit;font-weight:600;font-size:14.5px;color:var(--muted);padding:7px 12px;border-radius:9px;cursor:pointer;white-space:nowrap}
-.subjects-btn:hover,.subjects-btn.open{background:var(--accent-soft);color:var(--accent)}
-.subjects-btn #megaChev{display:inline-block;transition:transform .2s}
-.subjects-btn.open #megaChev{transform:rotate(180deg)}
-.burger{display:none;margin-left:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;width:42px;height:42px;font-size:18px;line-height:1;cursor:pointer;color:var(--muted);align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
-.burger:hover,.burger.open{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
-.burger .ic-close{display:none}
-.burger.open .ic-open{display:none}
-.burger.open .ic-close{display:inline}
-.search{margin-left:auto;position:relative}
-.search input{width:210px;padding:8px 14px 8px 34px;border:1px solid var(--border);border-radius:10px;font:inherit;font-size:14px;background:var(--bg);outline:none}
-.search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:#fff}
-.search::before{content:'🔍';position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.6}
-.mega{position:absolute;top:100%;left:0;right:0;background:#fff;border-bottom:1px solid var(--border);box-shadow:0 24px 44px rgba(30,41,59,.14);visibility:hidden;opacity:0;transform:translateY(-8px);transition:opacity .2s,transform .2s,visibility .2s;pointer-events:none}
-.mega.open{visibility:visible;opacity:1;transform:translateY(0);pointer-events:auto}
-.mega-inner{max-width:1080px;margin:0 auto;padding:22px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
-.mega-dir h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:6px}
-.mega-dir a{display:flex;gap:8px;align-items:center;padding:5px 8px;border-radius:8px;color:var(--text);font-size:13.5px;font-weight:600}
-.mega-dir a:hover{background:var(--accent-soft);color:var(--accent)}
-.mega-mobile-only{display:none}
-.crumb{font-size:13.5px;color:var(--muted);margin:26px 0 14px}
-.section-title{display:flex;align-items:baseline;gap:12px;margin:36px 0 16px}
-.section-title h2{font-size:21px;font-weight:700}
-.section-title .hint{color:var(--muted);font-size:13.5px}
-.dir-name{font-size:12.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:700;margin:26px 0 12px}
-.mini-label{font-size:13px;font-weight:600;color:var(--muted);margin:22px 0 10px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(230px,100%),1fr));gap:14px}
-.tile{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;transition:.18s;color:var(--text);display:block}
-.tile:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(30,41,59,.10)}
-.tile h3{font-size:16px;margin-bottom:4px}
-.tile-count{font-size:12.5px;font-weight:700}
-.tile-teach{font-size:12.5px;color:var(--muted);margin-top:6px}
-.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),280px));gap:16px}
-.cat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;transition:.2s;display:block;color:var(--text)}
-.cat-card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(30,41,59,.10)}
-.cat-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
-.cat-card h3{font-size:17.5px;margin-bottom:5px}
-.cat-card p{color:var(--muted);font-size:13.5px;line-height:1.5}
-.cat-count{margin-top:14px;font-size:12.5px;font-weight:700}
-.teach-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:14px}
-.teach-card{display:flex;gap:13px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:15px 17px;color:var(--text);transition:.18s}
-.teach-card:hover{border-color:var(--accent);box-shadow:0 8px 20px rgba(79,70,229,.10)}
-.avatar{width:46px;height:46px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0}
-.teach-card h3{font-size:15px}
-.teach-card p{font-size:12.5px;color:var(--muted)}
-.teach-card span{font-size:12.5px;font-weight:700;color:var(--accent)}
-.more-link{justify-content:center;font-weight:700;color:var(--accent);background:var(--accent-soft);border-style:dashed}
-.mats{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(310px,100%),1fr));gap:16px}
-.mat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;transition:.18s;display:flex;flex-direction:column;color:var(--text)}
-.mat-card:hover{border-color:var(--accent);box-shadow:0 8px 22px rgba(79,70,229,.10)}
-.mat-top{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
-.badge{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
-.cat-tag{font-size:12px;font-weight:600}
-.mat-date{margin-left:auto;font-size:12px;color:var(--muted)}
-.mat-card h3{font-size:16px;line-height:1.4;margin-bottom:6px}
-.mat-card p{color:var(--muted);font-size:13.5px;flex:1}
-.mat-meta{margin-top:12px;font-size:12.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0;align-items:center}
-.chip{display:inline-block;padding:7px 15px;border-radius:999px;border:1px solid var(--border);background:var(--surface);font-size:13.5px;font-weight:600;color:var(--muted);transition:.15s}
-.chip:hover{border-color:var(--accent);color:var(--accent)}
-.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
-.chip-sep{width:1px;background:var(--border);align-self:stretch;margin:4px 6px}
-.pagination{display:flex;gap:6px;justify-content:center;margin:28px 0 8px;flex-wrap:wrap}
-.page-btn{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-weight:600;font-size:14px;color:var(--muted)}
-.page-btn:hover{border-color:var(--accent);color:var(--accent)}
-.page-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
-.empty{color:var(--muted);text-align:center;padding:44px 0;font-size:15px}
-.hidden-note{margin-top:14px;display:inline-block;font-size:12.5px;color:var(--muted);border:1px dashed var(--border);border-radius:9px;padding:6px 12px;background:var(--bg)}
-.tile-icon{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;font-size:28px;margin-bottom:14px}
-.tile-icon-default{background:#F1F5F9}
-.tile-count{color:var(--accent);font-weight:700;font-size:14.5px}
-footer{margin-top:60px;border-top:1px solid var(--border);padding:26px 20px;color:var(--muted);font-size:13.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;max-width:1080px;margin-left:auto;margin-right:auto;width:100%}
+{% extends "base.html" %}
+{% block title %}{{ material.title }} — Лекторий{% endblock %}
+{% block extra_css %}
+.article{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:clamp(22px,4vw,44px)}
+.article h1{font-size:clamp(22px,3vw,29px);line-height:1.25;margin:10px 0 4px}
+.article .body{margin-top:18px;font-size:15.5px;line-height:1.7;overflow-wrap:break-word}
+.article .body h2{font-size:1.4em;margin-top:1.5em;margin-bottom:0.6em;color:var(--text)}
+.article .body h3{font-size:1.2em;margin-top:1.3em;margin-bottom:0.5em;color:var(--text)}
+.article .body p{margin-bottom:1em}
+.article .body ul,.article .body ol{margin-left:1.5em;margin-bottom:1em}
+.article .body li{margin-bottom:0.5em}
+.article .body table{border-collapse:collapse;width:100%;margin:1.2em 0;font-size:14px}
+.article .body th,.article .body td{border:1px solid var(--border);padding:10px 14px;text-align:left;vertical-align:top}
+.article .body th{background:var(--bg);font-weight:600}
+.article .body tr:nth-child(even){background:var(--bg)}
+.article .body code{background:var(--bg);padding:3px 8px;border-radius:5px;font-family:'Courier New',monospace;font-size:0.9em;color:#E11D48}
+.article .body pre{background:var(--bg);padding:16px;border-radius:10px;overflow-x:auto;margin:1em 0}
+.article .body pre code{background:transparent;padding:0;color:var(--text)}
+.article .body hr{margin:2em 0;border:none;border-top:1px solid var(--border)}
+.article .body blockquote{border-left:4px solid var(--accent);padding-left:16px;margin:1.2em 0;color:var(--muted);font-style:italic}
+.article .body img{max-width:100%;height:auto;border-radius:8px}
 
-/* ================= МОБИЛЬНАЯ АДАПТАЦИЯ ================= */
-@media(max-width:860px){
-  .subjects-btn,.navlink{display:none}
-  .burger{display:flex}
-  .search{margin-left:auto}
-  .search input{width:170px}
-  /* Мега-меню → полноэкранное мобильное меню */
-  .mega{position:fixed;top:64px;bottom:0;left:0;right:0;overflow-y:auto;-webkit-overflow-scrolling:touch;border-bottom:none;box-shadow:none;transform:translateX(-100%);opacity:1;transition:transform .25s,visibility .25s}
-  .mega.open{transform:translateX(0)}
-  .mega-inner{grid-template-columns:1fr;gap:16px;padding:18px 20px 48px}
-  .mega-dir a{padding:10px 12px;font-size:15.5px;border:1px solid var(--border);border-radius:11px;margin-bottom:6px}
-  .mega-dir h4{margin:4px 0 8px}
-  .mega-mobile-only{display:block}
-}
-@media(max-width:520px){
-  .header-search{display:none}
-  .container{padding:0 16px}
-  .crumb{margin:18px 0 12px}
-  .section-title{margin:28px 0 14px;flex-wrap:wrap}
-  .mat-card{padding:16px}
-  .tile{padding:16px}
-  .cat-card{padding:18px}
-  footer{justify-content:center;text-align:center}
-}
-{% block extra_css %}{% endblock %}
-</style>
-</head>
-<body>
-<div id="topbar">
-{% block header %}
-<header>
-  <div class="container header-inner">
-    <a class="logo" href="{% url 'portal_home' %}"><span class="logo-badge">Л</span> Лекторий</a>
-    <button class="subjects-btn" id="megaBtn">📚 Предметы <span id="megaChev">▾</span></button>
-    <a class="navlink" href="{% url 'teachers_list' %}">👤 Преподаватели</a>
-    <form class="search header-search" action="{% url 'search' %}" method="get">
-      <input name="q" placeholder="Поиск материалов…" value="{{ query|default:'' }}">
-    </form>
-    <button class="burger" id="burgerBtn" aria-label="Меню"><span class="ic-open">☰</span><span class="ic-close">✕</span></button>
+/* ===== Таблицы: горизонтальный скролл на узких экранах ===== */
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:1.2em 0;border:1px solid var(--border);border-radius:10px}
+.table-scroll table{margin:0;border:none;width:auto;min-width:100%}
+.table-scroll th,.table-scroll td{white-space:nowrap}
+/* Тени-подсказки «можно листать», исчезают по краям прокрутки */
+.table-scroll{background:
+  linear-gradient(to right,#fff 30%,rgba(255,255,255,0)) left local,
+  linear-gradient(to left,#fff 30%,rgba(255,255,255,0)) right local,
+  linear-gradient(to right,rgba(30,41,59,.12),rgba(30,41,59,0)) left scroll,
+  linear-gradient(to left,rgba(30,41,59,.12),rgba(30,41,59,0)) right scroll;
+  background-repeat:no-repeat;
+  background-size:32px 100%,32px 100%,12px 100%,12px 100%}
+
+.video-box{margin-top:22px;border-radius:14px;overflow:hidden;aspect-ratio:16/9;background:#0F172A}
+.video-box iframe{width:100%;height:100%;border:0}
+.embed-box{margin-top:22px;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.embed-box iframe{width:100%;min-height:420px;border:0;display:block}
+.sim-head{padding:12px 16px;background:var(--accent-soft);font-weight:700;font-size:14px;color:var(--accent);border-bottom:1px solid var(--border)}
+.attach{margin-top:26px;border-top:1px solid var(--border);padding-top:20px}
+.attach h3{font-size:16px;margin-bottom:12px}
+.file-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--border);border-radius:11px;margin-bottom:8px;background:var(--bg);transition:.15s}
+.file-row:hover{border-color:var(--accent)}
+.file-ico{font-size:19px}
+.file-name{flex:1;font-size:14px;font-weight:600;color:var(--text);word-break:break-word}
+.file-btn{font-size:12.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:5px 12px;border-radius:8px;white-space:nowrap}
+.author-block{display:flex;gap:14px;align-items:center;margin-top:28px;border-top:1px solid var(--border);padding-top:22px;flex-wrap:wrap}
+.author-block .who{flex:1;min-width:200px}
+.author-block .lbl{font-size:12.5px;color:var(--muted)}
+.author-block .nm{font-weight:700;font-size:15px}
+.author-block .sb{font-size:13px;color:var(--muted)}
+{% endblock %}
+{% block content %}
+<div class="crumb">
+  <a href="{% url 'portal_home' %}">Лекторий</a> /
+  {% if material.subject.is_hidden %}
+    <a href="{% url 'subject_detail' material.subject.slug %}">Личные материалы</a> /
+  {% else %}
+    <a href="{% url 'subject_detail' material.subject.slug %}">{{ material.subject.name }}</a> /
+  {% endif %}
+  {{ material.title }}
+</div>
+
+<article class="article">
+  <div class="mat-top">
+    <span class="badge" style="color:{{ material.type_color }};background:{{ material.type_bg }}">{{ material.get_type_display }}</span>
+    {% if not material.subject.is_hidden %}
+    <span class="cat-tag" style="color:{{ material.subject.icon_bg_color }}">{{ material.subject.icon }} {{ material.subject.name }}</span>
+    {% endif %}
+    <span class="mat-date">{{ material.created_at|date:"d.m.Y" }}</span>
   </div>
-</header>
-<div class="mega" id="megaPanel">
-  <div class="mega-inner">
-    <div class="mega-mobile-only">
-      <form class="search" style="margin:0 0 14px" action="{% url 'search' %}" method="get">
-        <input name="q" placeholder="Поиск материалов…" value="{{ query|default:'' }}" style="width:100%">
-      </form>
-      <div class="mega-dir">
-        <h4>Разделы</h4>
-        <a href="{% url 'teachers_list' %}">👤 Преподаватели</a>
-      </div>
-    </div>
-    {% for dir in menu_directions %}
-    <div class="mega-dir">
-      <h4>{{ dir.name }}</h4>
-      {% for s in dir.subjects.all %}
-        {% if not s.is_hidden %}
-        <a href="{% url 'subject_detail' s.slug %}">{{ s.icon }} {{ s.name }}</a>
-        {% endif %}
-      {% endfor %}
+  <h1>{{ material.title }}</h1>
+
+  {% if material.content %}
+  <div class="body">{{ material.content|safe }}</div>
+  {% endif %}
+
+  {% if material.video_url %}
+  <div class="video-box">
+    <iframe src="{{ material.video_url }}" allowfullscreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+  </div>
+  {% endif %}
+
+  {% if material.simulation_file %}
+  <div class="embed-box">
+    <div class="sim-head">🕹 Интерактивная модель</div>
+    <iframe src="{{ material.simulation_file.url }}" title="Интерактивная модель" loading="lazy"></iframe>
+  </div>
+  {% elif material.embed_code %}
+  <div class="embed-box">
+    <div class="sim-head">🕹 Интерактивная модель</div>
+    {% if material.embed_code|slice:":4" == "http" %}
+      <iframe src="{{ material.embed_code }}" title="Интерактивная модель"
+              allowfullscreen loading="lazy"></iframe>
+    {% else %}
+      {{ material.embed_code|safe }}
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if material.attachments.all %}
+  <div class="attach">
+    <h3>📎 Файлы для скачивания</h3>
+    {% for f in material.attachments.all %}
+    <div class="file-row">
+      <span class="file-ico">📄</span>
+      <span class="file-name">{{ f.title|default:f.filename }}</span>
+      <a class="file-btn" href="{{ f.file.url }}" download>Скачать</a>
     </div>
     {% endfor %}
   </div>
-</div>
-{% endblock %}
-</div>
+  {% endif %}
 
-<main class="container">{% block content %}{% endblock %}</main>
+  {% if material.links.all %}
+  <div class="attach">
+    <h3>🔗 Полезные ссылки</h3>
+    {% for l in material.links.all %}
+    <div class="file-row">
+      <span class="file-ico">🌐</span>
+      <a class="file-name" href="{{ l.url }}" target="_blank" rel="noopener">{{ l.title }}</a>
+      <span class="file-btn">Открыть ↗</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 
-<footer class="container">
-  <span>© {% now "Y" %} «Лекторий» · phys-it.ru</span>
-  <span>Сделано преподавателями — для учеников</span>
-</footer>
+  <div class="author-block">
+    <div class="avatar" style="background:{{ material.author.color }}">{{ material.author.initials }}</div>
+    <div class="who">
+      <div class="lbl">Материал подготовил</div>
+      <div class="nm">{{ material.author.display_name }}</div>
+      <div class="sb">{{ material.author.role }}</div>
+    </div>
+    <a class="file-btn" href="{% url 'teacher_home' material.author.code %}">Страница преподавателя →</a>
+  </div>
+</article>
 
 <script>
-document.addEventListener('click', function(e){
-  var panel  = document.getElementById('megaPanel');
-  var btn    = document.getElementById('megaBtn');
-  var burger = document.getElementById('burgerBtn');
-  if (!panel) return;
-
-  function closeAll(){
-    panel.classList.remove('open');
-    if (btn) btn.classList.remove('open');
-    if (burger) burger.classList.remove('open');
-    document.body.classList.remove('menu-open');
-  }
-
-  if (btn && btn.contains(e.target)) {
-    panel.classList.toggle('open');
-    btn.classList.toggle('open');
-  } else if (burger && burger.contains(e.target)) {
-    panel.classList.toggle('open');
-    burger.classList.toggle('open');
-    document.body.classList.toggle('menu-open', panel.classList.contains('open'));
-  } else if (!panel.contains(e.target)) {
-    closeAll();
-  }
-});
-// Закрываем мобильное меню при переходе по ссылке внутри него
-document.querySelectorAll('#megaPanel a').forEach(function(a){
-  a.addEventListener('click', function(){
-    var panel = document.getElementById('megaPanel');
-    var burger = document.getElementById('burgerBtn');
-    if (panel) panel.classList.remove('open');
-    if (burger) burger.classList.remove('open');
-    document.body.classList.remove('menu-open');
-  });
+// Оборачиваем все таблицы в тексте в прокручиваемый контейнер
+document.querySelectorAll('.article .body table').forEach(function(t){
+  if (t.parentNode.classList.contains('table-scroll')) return;
+  var wrap = document.createElement('div');
+  wrap.className = 'table-scroll';
+  t.parentNode.insertBefore(wrap, t);
+  wrap.appendChild(t);
 });
 </script>
-</body>
-</html>
+{% endblock %}
