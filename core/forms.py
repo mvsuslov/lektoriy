@@ -1,9 +1,10 @@
 from django import forms
 from django_ckeditor_5.widgets import CKEditor5Widget
+from django.conf import settings as dj_settings
 import bleach
 import re
 
-from .models import Attachment, Link, Material, Subject
+from .models import Attachment, Link, Material, Review, Subject
 
 # ==== ДОБАВЛЕНО: список разрешённых видеохостингов ====
 ALLOWED_VIDEO_HOSTS = {
@@ -156,3 +157,39 @@ class LinkForm(forms.ModelForm):
         if url and not title:
             cleaned["title"] = url
         return cleaned
+
+
+class ReviewForm(forms.Form):
+    title = forms.CharField(
+        label="Название проверки", max_length=200,
+        widget=forms.TextInput(attrs={
+            "class": "f-input",
+            "placeholder": "Например: Конспект «Закон Ома», 8 класс",
+        })
+    )
+    level = forms.ChoiceField(
+        label="Уровень образования",
+        choices=Review.Level.choices,
+        widget=forms.RadioSelect  # стилизуем чипсами в шаблоне
+    )
+    input_text = forms.CharField(
+        label="Текст конспекта или методической разработки",
+        widget=forms.Textarea(attrs={
+            "class": "f-input", "rows": 14,
+            "placeholder": "Вставьте текст сюда…",
+        })
+    )
+
+    def clean_input_text(self):
+        text = self.cleaned_data["input_text"].strip()
+        if len(text) < 300:
+            raise forms.ValidationError(
+                "Текст слишком короткий (минимум 300 символов) — "
+                "анализ будет бессмысленным."
+            )
+        if len(text) > dj_settings.REVIEW_MAX_CHARS:
+            raise forms.ValidationError(
+                f"Текст слишком длинный. Максимум "
+                f"{dj_settings.REVIEW_MAX_CHARS} символов."
+            )
+        return text

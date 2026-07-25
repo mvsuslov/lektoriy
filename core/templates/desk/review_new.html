@@ -1,0 +1,43 @@
+{% extends "desk/base.html" %}
+{% block content %}
+<h1>🔍 Методический анализ</h1>
+<p class="sub">Проверка конспекта или методической разработки на соответствие требованиям ФГОС.
+Сегодня использовано: <b>{{ today_count }}</b> из {{ daily_limit }}.</p>
+
+<div class="card">
+  <form method="post">
+    {% csrf_token %}
+    <div class="f-group">
+      <label class="f-label" for="id_title">Название проверки</label>
+      {{ form.title }}
+      {% if form.title.errors %}<div class="f-error">{{ form.title.errors.0 }}</div>{% endif %}
+    </div>
+
+    <div class="f-group">
+      <span class="f-label">Уровень образования</span>
+      <div class="chips">
+        {% for radio in form.level %}
+        <label class="chip">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+        {% endfor %}
+      </div>
+      {% if form.level.errors %}<div class="f-error">{{ form.level.errors.0 }}</div>{% endif %}
+    </div>
+
+    <div class="f-group">
+      <label class="f-label" for="id_input_text">Текст для анализа</label>
+      {{ form.input_text }}
+      <div class="f-hint">Минимум 300 символов. Анализ занимает 30–90 секунд.</div>
+      {% if form.input_text.errors %}<div class="f-error">{{ form.input_text.errors.0 }}</div>{% endif %}
+    </div>
+
+    <button class="btn" type="submit">Запустить анализ</button>
+  </form>
+</div>
+
+<p style="margin-top:16px;font-size:13.5px;color:var(--muted)">
+⚠️ Оценка формируется ИИ и носит рекомендательный характер.
+Это не официальная экспертиза и не заменяет решение методсовета.
+Актуальную редакцию ФГОС проверяйте на официальных ресурсах.
+</p>
+<p style="margin-top:8px"><a class="mini" href="{% url 'desk_review_list' %}">История проверок →</a></p>
+{% endblock %}

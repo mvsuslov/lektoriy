@@ -15,6 +15,16 @@ from axes.decorators import axes_dispatch
 from .forms import AttachmentForm, LinkForm, TeacherMaterialForm
 from .models import Material, Subject, TeacherProfile
 
+import hashlib
+import threading
+
+from django.http import JsonResponse
+from django.utils import timezone
+
+from .forms import ReviewForm
+from .models import Review, SiteSettings
+from .review_service import make_hash, run_analysis
+
 PER_PAGE = 6
 
 
@@ -290,6 +300,7 @@ def desk_home(request):
         "teacher": teacher,
         "materials": materials,
         "form": form,
+        "review_enabled": SiteSettings.get().review_enabled,
     })
 
 
@@ -394,3 +405,131 @@ def desk_password(request):
 def desk_logout(request):
     auth_logout(request)
     return redirect("portal_home")
+
+# ------------------------------------------------------------------
+# Методический анализ (DeepSeek)
+# ------------------------------------------------------------------
+
+def review_enabled_or_404():
+    if not SiteSettings.get().review_enabled:
+        raise Http404
+
+
+def _run_review_in_thread(review_id):
+    """Фоновый поток: вызывает API и записывает результат."""
+    from django import db
+    db.close_old_connections()
+    try:
+        review = Review.objects.get(pk=review_id)
+        result = run_analysis(review.level, review.input_text)
+        review.score = result.pop("score")
+        review.result = result
+        review.status = Review.Status.DONE
+    except Exception as e:
+        review.status = Review.Status.ERROR
+        review.error = str(e)[:300]
+    finally:
+        review.save(update_fields=["score", "result", "status", "error"])
+        db.close_old_connections()
+
+
+@teacher_required
+def desk_review_new(request):
+    review_enabled_or_404()
+    teacher = get_teacher(request)
+    if not teacher:
+        return redirect("portal_home")
+
+    # Дневной лимит
+    today_count = Review.objects.filter(
+        teacher=teacher,
+        created_at__date=timezone.localdate(),
+        from_cache=False,  # кэш не тратит лимит
+    ).count()
+
+    if request.method == "POST":
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            if today_count >= settings.REVIEW_DAILY_LIMIT:
+                messages.error(request, "Дневной лимит исчерпан. "
+                                        "Попробуйте завтра!")
+                return redirect("desk_review_new")
+
+            text = form.cleaned_data["input_text"]
+            text_hash = make_hash(text)
+
+            # Кэш: такой же текст уже проверялся этим преподавателем
+            cached = Review.objects.filter(
+                teacher=teacher, text_hash=text_hash,
+                status=Review.Status.DONE,
+            ).first()
+            if cached:
+                review = Review.objects.create(
+                    teacher=teacher,
+                    title=form.cleaned_data["title"],
+                    level=form.cleaned_data["level"],
+                    input_text=text, text_hash=text_hash,
+                    status=Review.Status.DONE,
+                    score=cached.score, result=cached.result,
+                    from_cache=True,
+                )
+                messages.success(request, "Этот текст уже проверялся — "
+                                          "показан сохранённый результат (бесплатно).")
+                return redirect("desk_review_detail", pk=review.pk)
+
+            review = Review.objects.create(
+                teacher=teacher,
+                title=form.cleaned_data["title"],
+                level=form.cleaned_data["level"],
+                input_text=text, text_hash=text_hash,
+            )
+            threading.Thread(
+                target=_run_review_in_thread, args=(review.pk,), daemon=True
+            ).start()
+            return redirect("desk_review_detail", pk=review.pk)
+    else:
+        form = ReviewForm()
+
+    return render(request, "desk/review_new.html", {
+        "teacher": teacher,
+        "form": form,
+        "today_count": today_count,
+        "daily_limit": settings.REVIEW_DAILY_LIMIT,
+    })
+
+
+@teacher_required
+def desk_review_detail(request, pk):
+    review_enabled_or_404()
+    teacher = get_teacher(request)
+    review = get_object_or_404(Review, pk=pk)
+    if not request.user.is_superuser and review.teacher != teacher:
+        raise Http404
+    return render(request, "desk/review_detail.html", {
+        "teacher": teacher, "review": review,
+    })
+
+
+@teacher_required
+def desk_review_status(request, pk):
+    """JSON-эндпоинт для поллинга со страницы результата."""
+    review = get_object_or_404(Review, pk=pk)
+    teacher = get_teacher(request)
+    if not request.user.is_superuser and review.teacher != teacher:
+        raise Http404
+    return JsonResponse({
+        "status": review.status,
+        "score": review.score,
+        "result": review.result,
+        "error": review.error,
+    })
+
+
+@teacher_required
+def desk_review_list(request):
+    review_enabled_or_404()
+    teacher = get_teacher(request)
+    reviews = teacher.reviews.all() if teacher else Review.objects.none()
+    return render(request, "desk/review_list.html", {
+        "teacher": teacher, "reviews": reviews,
+    })

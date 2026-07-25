@@ -1,0 +1,44 @@
+{% extends "desk/base.html" %}
+{% block content %}
+<div class="desk-head" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+  <h1 style="margin:0">История проверок</h1>
+  <a class="btn desk-head-btn" style="margin-left:auto" href="{% url 'desk_review_new' %}">＋ Новая проверка</a>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden">
+{% if reviews %}
+<table class="desk-table">
+  <thead><tr><th>Проверка</th><th>Уровень</th><th>Оценка</th><th>Статус</th><th></th></tr></thead>
+  <tbody>
+  {% for r in reviews %}
+  <tr>
+    <td data-label="Проверка"><b>{{ r.title }}</b><br>
+      <span style="color:var(--muted);font-size:13px">{{ r.created_at|date:"d.m.Y H:i" }}</span></td>
+    <td data-label="Уровень">{{ r.get_level_display }}</td>
+    <td data-label="Оценка">{% if r.score %}<b>{{ r.score }}/10</b>{% else %}—{% endif %}</td>
+    <td data-label="Статус">
+      {% if r.status == "done" %}<span class="pill pill-on">Готов</span>
+      {% elif r.status == "pending" %}<span class="pill pill-off">В обработке</span>
+      {% else %}<span class="pill" style="background:#FEF2F2;color:#B91C1C">Ошибка</span>{% endif %}
+    </td>
+    <td class="desk-actions"><a class="mini" href="{% url 'desk_review_detail' r.pk %}">Открыть</a></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty">Проверок пока нет.<br>Нажмите «Новая проверка» — анализ займёт около минуты.</div>
+{% endif %}
+</div>
+
+<style>
+.desk-table th:first-child,.desk-table td:first-child{padding-left:20px}
+.desk-table th:last-child,.desk-table td:last-child{padding-right:20px}
+@media(max-width:700px){
+  .desk-head-btn{margin-left:0 !important;width:100%}
+  .desk-table tr{margin:12px}
+  .desk-table td:first-child{padding-left:0}
+  .desk-table td:last-child{padding-right:0}
+}
+</style>
+{% endblock %}

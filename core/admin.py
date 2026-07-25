@@ -3,6 +3,7 @@ import json
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.utils.safestring import mark_safe
+from .models import Review, SiteSettings
 
 from .models import (Attachment, Direction, Link, Material, Subject,
                      TeacherProfile)
@@ -267,6 +268,39 @@ class TeacherProfileAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         # Новых преподавателей создаёт только суперпользователь
+        return is_super(request.user)
+
+    def has_delete_permission(self, request, obj=None):
+        return is_super(request.user)
+
+# ======  DeepSeek методист =======
+@admin.register(SiteSettings)
+class SiteSettingsAdmin(admin.ModelAdmin):
+    list_display = ("__str__", "review_enabled")
+
+    def has_add_permission(self, request):
+        return is_super(request.user) and not SiteSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_module_permission(self, request):
+        return is_super(request.user)
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ("title", "teacher", "level", "score", "status",
+                    "from_cache", "created_at")
+    list_filter = ("level", "status", "from_cache")
+    readonly_fields = ("teacher", "title", "level", "input_text", "text_hash",
+                       "status", "score", "result", "error", "from_cache",
+                       "created_at")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
         return is_super(request.user)
 
     def has_delete_permission(self, request, obj=None):

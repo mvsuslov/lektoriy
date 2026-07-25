@@ -1,0 +1,100 @@
+{% extends "desk/base.html" %}
+{% block content %}
+<h1>{{ review.title }}</h1>
+<p class="sub">{{ review.get_level_display }} · {{ review.created_at|date:"d.m.Y H:i" }}
+{% if review.from_cache %} · <span class="pill pill-off">из кэша</span>{% endif %}</p>
+
+{% if review.status == "pending" %}
+<div class="card" id="pendingBox" style="text-align:center;padding:44px 20px">
+  <div style="font-size:34px;margin-bottom:10px">⏳</div>
+  <b>Идёт анализ…</b>
+  <p style="color:var(--muted);font-size:14px;margin-top:6px">
+    Обычно 30–90 секунд. Страница обновится автоматически.</p>
+</div>
+
+<script>
+(function(){
+  const url = "{% url 'desk_review_status' review.pk %}";
+  const timer = setInterval(async () => {
+    try {
+      const r = await fetch(url);
+      const d = await r.json();
+      if (d.status !== "pending") { clearInterval(timer); location.reload(); }
+    } catch(e) { /* сеть моргнула — пробуем дальше */ }
+  }, 3000);
+})();
+</script>
+
+{% elif review.status == "error" %}
+<div class="card">
+  <div class="msg msg-err">Не удалось выполнить анализ: {{ review.error }}.
+  Попробуйте ещё раз чуть позже.</div>
+  <a class="btn" href="{% url 'desk_review_new' %}">Новая проверка</a>
+</div>
+
+{% else %}
+<div class="card score-card">
+  <div class="score-num">{{ review.score }}<span>/10</span></div>
+  <div class="score-label">
+    {% if review.score >= 9 %}Отлично{% elif review.score >= 7 %}Хорошо
+    {% elif review.score >= 5 %}Требует доработки{% else %}Серьёзные замечания{% endif %}
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <h3 style="margin-bottom:8px">📝 Рецензия</h3>
+  <p style="font-size:15px">{{ review.result.summary }}</p>
+</div>
+
+{% if review.result.strengths %}
+<div class="card" style="margin-top:14px">
+  <h3 style="margin-bottom:10px;color:var(--ok)">✅ Сильные стороны</h3>
+  <ul class="rev-list">
+    {% for s in review.result.strengths %}<li>{{ s }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if review.result.weaknesses %}
+<div class="card" style="margin-top:14px">
+  <h3 style="margin-bottom:10px;color:var(--danger)">⚠️ Недочёты</h3>
+  <ul class="rev-list">
+    {% for s in review.result.weaknesses %}<li>{{ s }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if review.result.suggestions %}
+<div class="card" style="margin-top:14px">
+  <h3 style="margin-bottom:10px;color:var(--accent)">💡 Предложения по доработке</h3>
+  <ol class="rev-list">
+    {% for s in review.result.suggestions %}<li>{{ s }}</li>{% endfor %}
+  </ol>
+</div>
+{% endif %}
+
+<div class="msg" style="margin-top:16px;background:#FFFBEB;color:#92400E;border:1px solid #FDE68A">
+  ⚠️ Оценка сформирована ИИ и носит рекомендательный характер.
+  Актуальную редакцию ФГОС проверяйте на официальных ресурсах.
+</div>
+
+<div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+  <a class="btn btn-ghost" href="{% url 'desk_review_new' %}">Новая проверка</a>
+  <a class="btn btn-ghost" href="{% url 'desk_review_list' %}">История</a>
+</div>
+{% endif %}
+
+<style>
+.score-card{text-align:center;padding:30px 20px}
+.score-num{font-size:52px;font-weight:800;color:var(--accent);line-height:1}
+.score-num span{font-size:22px;color:var(--muted);font-weight:600}
+.score-label{margin-top:8px;font-weight:700;font-size:16px}
+.rev-list{margin:0;padding-left:22px;font-size:14.5px}
+.rev-list li{margin-bottom:8px}
+@media(max-width:700px){
+  .score-num{font-size:42px}
+  .card h3{font-size:15.5px}
+  .btn-ghost{width:100%}
+}
+</style>
+{% endblock %}

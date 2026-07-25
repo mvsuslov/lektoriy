@@ -5,6 +5,18 @@
   <a class="btn desk-head-btn" style="margin-left:auto" href="{% url 'desk_material_new' %}">＋ Опубликовать материал</a>
 </div>
 
+{% if review_enabled %}
+<div class="card" style="margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+  <div style="font-size:28px">🔍</div>
+  <div style="flex:1;min-width:200px">
+    <b>Методический анализ</b>
+    <div style="color:var(--muted);font-size:13.5px">Проверка конспекта на соответствие ФГОС с помощью ИИ</div>
+  </div>
+  <a class="btn btn-ghost review-btn" href="{% url 'desk_review_new' %}">Проверить материал</a>
+</div>
+<style>@media(max-width:700px){.review-btn{width:100%}}</style>
+{% endif %}
+
 <div class="card" style="padding:0;overflow:hidden">
 {% if materials %}
 <table class="desk-table">

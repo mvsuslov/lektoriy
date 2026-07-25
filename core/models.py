@@ -421,3 +421,68 @@ class Link(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class SiteSettings(models.Model):
+    """Глобальные переключатели портала. Всегда одна запись (singleton)."""
+    review_enabled = models.BooleanField(
+        "Методический анализ включён", default=True,
+        help_text="Снимите галочку — раздел исчезнет из кабинета, "
+                  "данные проверок сохранятся."
+    )
+
+    class Meta:
+        verbose_name = "Настройки портала"
+        verbose_name_plural = "Настройки портала"
+
+    def __str__(self):
+        return "Настройки портала"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1  # всегда одна запись
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+
+class Review(models.Model):
+    """Результат методического анализа конспекта."""
+
+    class Level(models.TextChoices):
+        OOO = "ooo", "ФГОС ООО (5–9 классы)"
+        SOO = "soo", "ФГОС СОО (10–11 классы)"
+        SPO = "spo", "ФГОС СПО (колледж)"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "В обработке"
+        DONE = "done", "Готов"
+        ERROR = "error", "Ошибка"
+
+    teacher = models.ForeignKey(
+        TeacherProfile, on_delete=models.CASCADE,
+        related_name="reviews", verbose_name="Преподаватель"
+    )
+    title = models.CharField("Название проверки", max_length=200)
+    level = models.CharField("Уровень", max_length=10, choices=Level.choices)
+    input_text = models.TextField("Проверяемый текст")
+    text_hash = models.CharField("Хэш текста", max_length=64, db_index=True)
+    status = models.CharField(
+        "Статус", max_length=10,
+        choices=Status.choices, default=Status.PENDING
+    )
+    score = models.PositiveSmallIntegerField("Оценка (0–10)", null=True, blank=True)
+    result = models.JSONField("Результат (JSON)", null=True, blank=True)
+    error = models.CharField("Текст ошибки", max_length=300, blank=True)
+    from_cache = models.BooleanField("Из кэша", default=False)
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Методическая проверка"
+        verbose_name_plural = "Методические проверки"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.title} ({self.get_level_display()})"

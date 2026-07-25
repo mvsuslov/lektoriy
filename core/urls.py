@@ -18,5 +18,8 @@ urlpatterns = [
     path("desk/password/", views.desk_password, name="desk_password"),
     path("desk/logout/", views.desk_logout, name="desk_logout"),
     path("desk/edit/<int:pk>/", views.desk_material_edit, name="desk_material_edit"),
-
+    path("desk/review/", views.desk_review_list, name="desk_review_list"),
+    path("desk/review/new/", views.desk_review_new, name="desk_review_new"),
+    path("desk/review/<int:pk>/", views.desk_review_detail, name="desk_review_detail"),
+    path("desk/review/<int:pk>/status/", views.desk_review_status, name="desk_review_status"),
 ]
