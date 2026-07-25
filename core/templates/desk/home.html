@@ -12,9 +12,12 @@
     <b>Методический анализ</b>
     <div style="color:var(--muted);font-size:13.5px">Проверка конспекта на соответствие ФГОС с помощью ИИ</div>
   </div>
-  <a class="btn btn-ghost review-btn" href="{% url 'desk_review_new' %}">Проверить материал</a>
+  <div style="display:flex;gap:10px;flex-wrap:wrap" class="review-btns">
+    <a class="btn btn-ghost" href="{% url 'desk_review_new' %}">Проверить материал</a>
+    <a class="btn btn-ghost" href="{% url 'desk_review_list' %}">История</a>
+  </div>
 </div>
-<style>@media(max-width:700px){.review-btn{width:100%}}</style>
+<style>@media(max-width:700px){.review-btns{width:100%}.review-btns .btn{width:100%}}</style>
 {% endif %}
 
 <div class="card" style="padding:0;overflow:hidden">

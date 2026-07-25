@@ -1,8 +1,11 @@
 {% extends "desk/base.html" %}
 {% block content %}
-<div class="desk-head" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+<div class="desk-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px">
   <h1 style="margin:0">История проверок</h1>
-  <a class="btn desk-head-btn" style="margin-left:auto" href="{% url 'desk_review_new' %}">＋ Новая проверка</a>
+  <div class="desk-head-btns" style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap">
+    <a class="btn btn-ghost desk-head-btn" href="{% url 'desk_home' %}">← Мои материалы</a>
+    <a class="btn desk-head-btn" href="{% url 'desk_review_new' %}">＋ Новая проверка</a>
+  </div>
 </div>
 
 <div class="card" style="padding:0;overflow:hidden">
@@ -35,7 +38,8 @@
 .desk-table th:first-child,.desk-table td:first-child{padding-left:20px}
 .desk-table th:last-child,.desk-table td:last-child{padding-right:20px}
 @media(max-width:700px){
-  .desk-head-btn{margin-left:0 !important;width:100%}
+  .desk-head-btns{margin-left:0 !important;width:100%;flex-direction:column}
+  .desk-head-btns .btn{width:100%}
   .desk-table tr{margin:12px}
   .desk-table td:first-child{padding-left:0}
   .desk-table td:last-child{padding-right:0}
