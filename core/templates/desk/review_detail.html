@@ -29,7 +29,10 @@
 <div class="card">
   <div class="msg msg-err">Не удалось выполнить анализ: {{ review.error }}.
   Попробуйте ещё раз чуть позже.</div>
-  <a class="btn" href="{% url 'desk_review_new' %}">Новая проверка</a>
+  <div class="btn-row">
+    <a class="btn" href="{% url 'desk_review_new' %}">Новая проверка</a>
+    <a class="btn btn-ghost" href="{% url 'desk_home' %}">← Мои материалы</a>
+  </div>
 </div>
 
 {% else %}
@@ -78,9 +81,10 @@
   Актуальную редакцию ФГОС проверяйте на официальных ресурсах.
 </div>
 
-<div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
-  <a class="btn btn-ghost" href="{% url 'desk_review_new' %}">Новая проверка</a>
-  <a class="btn btn-ghost" href="{% url 'desk_review_list' %}">История</a>
+<div class="btn-row">
+  <a class="btn" href="{% url 'desk_review_new' %}">＋ Новая проверка</a>
+  <a class="btn btn-ghost" href="{% url 'desk_review_list' %}">История проверок</a>
+  <a class="btn btn-ghost" href="{% url 'desk_home' %}">← Мои материалы</a>
 </div>
 {% endif %}
 
@@ -94,7 +98,10 @@
 @media(max-width:700px){
   .score-num{font-size:42px}
   .card h3{font-size:15.5px}
-  .btn-ghost{width:100%}
+}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+@media(max-width:700px){
+  .btn-row .btn{width:100%}
 }
 </style>
 {% endblock %}

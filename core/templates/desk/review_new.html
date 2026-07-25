@@ -30,7 +30,11 @@
       {% if form.input_text.errors %}<div class="f-error">{{ form.input_text.errors.0 }}</div>{% endif %}
     </div>
 
-    <button class="btn" type="submit">Запустить анализ</button>
+        <div class="btn-row">
+      <button class="btn" type="submit">Запустить анализ</button>
+      <a class="btn btn-ghost" href="{% url 'desk_review_list' %}">История проверок</a>
+      <a class="btn btn-ghost" href="{% url 'desk_home' %}">← Мои материалы</a>
+    </div>
   </form>
 </div>
 
@@ -39,5 +43,11 @@
 Это не официальная экспертиза и не заменяет решение методсовета.
 Актуальную редакцию ФГОС проверяйте на официальных ресурсах.
 </p>
-<p style="margin-top:8px"><a class="mini" href="{% url 'desk_review_list' %}">История проверок →</a></p>
+
+<style>
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+@media(max-width:700px){
+  .btn-row .btn{width:100%}
+}
+</style>
 {% endblock %}
