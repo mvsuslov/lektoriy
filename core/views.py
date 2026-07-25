@@ -9,6 +9,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth import logout as auth_logout
 from django.views.decorators.http import require_POST
+from django.conf import settings
 
 from axes.decorators import axes_dispatch
 
