@@ -9,8 +9,6 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-API_URL = "https://api.deepseek.com/chat/completions"
-
 CRITERIA = {
     "ooo": """Критерии ФГОС ООО (5–9 классы):
 - наличие целей: предметные, метапредметные, личностные;
@@ -61,8 +59,10 @@ def run_analysis(level: str, text: str) -> dict:
 
     user_prompt = f"{CRITERIA[level]}\n\n=== ТЕКСТ ДЛЯ АНАЛИЗА ===\n{text}"
 
+    api_url=f"{settings.DEEPSEEK_BASE_URL.rstrip('/')}/chat/completions"
+
     resp = requests.post(
-        API_URL,
+        api_url,
         headers={"Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}"},
         json={
             "model": settings.DEEPSEEK_MODEL,

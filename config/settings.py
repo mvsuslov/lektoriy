@@ -201,8 +201,9 @@ LOGGING = {
     },
 }
 
-# ==== Методический анализ ====
+# ==== Методический анализ (DeepSeek) ====
 DEEPSEEK_API_KEY = config('DEEPSEEK_API_KEY', default='')
-DEEPSEEK_MODEL = 'deepseek-chat'
-REVIEW_DAILY_LIMIT = 5            # анализов в день на преподавателя
-REVIEW_MAX_CHARS = 60000          # максимум символов текста
+DEEPSEEK_BASE_URL = config('DEEPSEEK_BASE_URL', default='https://api.deepseek.com/v1')
+DEEPSEEK_MODEL = config('DEEPSEEK_MODEL', default='deepseek-chat')
+REVIEW_DAILY_LIMIT = 5
+REVIEW_MAX_CHARS = 60000
