@@ -445,8 +445,7 @@ def desk_review_new(request):
     today_count = Review.objects.filter(
         teacher=teacher,
         created_at__date=timezone.localdate(),
-        from_cache=False,  # кэш не тратит лимит
-    ).count()
+        from_cache=False,    ).exclude(status=Review.Status.ERROR).count()
 
     if request.method == "POST":
         form = ReviewForm(request.POST)

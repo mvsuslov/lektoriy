@@ -59,7 +59,7 @@ def run_analysis(level: str, text: str) -> dict:
 
     user_prompt = f"{CRITERIA[level]}\n\n=== ТЕКСТ ДЛЯ АНАЛИЗА ===\n{text}"
 
-    api_url=f"{settings.DEEPSEEK_BASE_URL.rstrip('/')}/chat/completions"
+    api_url = f"{settings.DEEPSEEK_BASE_URL.rstrip('/')}/chat/completions"
 
     resp = requests.post(
         api_url,
@@ -70,17 +70,39 @@ def run_analysis(level: str, text: str) -> dict:
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},
             ],
-            "response_format": {"type": "json_object"},
             "temperature": 0.3,
             "max_tokens": 1500,
         },
         timeout=120,
     )
-    resp.raise_for_status()
-    content = resp.json()["choices"][0]["message"]["content"]
-    data = json.loads(content)
 
-    # Валидация структуры
+    # ==== Диагностика: HTTP-ошибки с текстом ответа ====
+    if resp.status_code != 200:
+        raise RuntimeError(
+            f"API вернул {resp.status_code}: {resp.text[:200]}"
+        )
+
+    # ==== Диагностика: пустое или кривое тело ====
+    try:
+        payload = resp.json()
+    except ValueError:
+        raise RuntimeError(f"Невалидный JSON в ответе API: {resp.text[:200]}")
+
+    content = (payload.get("choices") or [{}])[0].get("message", {}).get("content") or ""
+    if not content.strip():
+        raise RuntimeError(f"Пустой ответ модели: {str(payload)[:200]}")
+
+    # ==== Модель может обернуть JSON в ```json ... ``` — чистим ====
+    cleaned = content.strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.split("\n", 1)[-1]          # убрать первую строку ```json
+        cleaned = cleaned.rsplit("```", 1)[0].strip() # убрать закрывающий ```
+
+    try:
+        data = json.loads(cleaned)
+    except ValueError:
+        raise RuntimeError(f"Модель вернула не-JSON: {cleaned[:200]}")
+
     return {
         "score": max(1, min(10, int(data.get("score", 5)))),
         "summary": str(data.get("summary", ""))[:2000],
