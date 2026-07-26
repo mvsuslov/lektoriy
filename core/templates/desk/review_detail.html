@@ -39,8 +39,11 @@
 <div class="card score-card">
   <div class="score-num">{{ review.score }}<span>/10</span></div>
   <div class="score-label">
-    {% if review.score >= 9 %}Отлично{% elif review.score >= 7 %}Хорошо
-    {% elif review.score >= 5 %}Требует доработки{% else %}Серьёзные замечания{% endif %}
+    {% if review.score == 10 %}Эталонная работа 🏆
+    {% elif review.score == 9 %}Отлично — практически эталон
+    {% elif review.score >= 7 %}Хорошо
+    {% elif review.score >= 5 %}Требует доработки
+    {% else %}Серьёзные замечания{% endif %}
   </div>
 </div>
 
@@ -55,6 +58,13 @@
   <ul class="rev-list">
     {% for s in review.result.strengths %}<li>{{ s }}</li>{% endfor %}
   </ul>
+</div>
+{% endif %}
+
+{% if review.score >= 9 and not review.result.weaknesses %}
+<div class="card" style="margin-top:14px">
+  <h3 style="margin-bottom:10px;color:var(--ok)">✅ Недочёты</h3>
+  <p style="font-size:15px;color:var(--muted)">Существенных недочётов не выявлено — отличная работа!</p>
 </div>
 {% endif %}
 
