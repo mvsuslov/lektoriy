@@ -76,16 +76,6 @@ def all_subjects(request):
 def subject_detail(request, slug):
     subject = get_object_or_404(Subject, slug=slug)
 
-    # ==== ДОБАВЛЕНО: проверка is_hidden ====
-    if subject.is_hidden:
-        # Если предмет скрыт, доступ только для суперпользователя или преподавателя, у которого есть этот предмет
-        user = request.user
-        if not (user.is_superuser or (
-            hasattr(user, 'teacher_profile') and
-            user.teacher_profile.subjects.filter(pk=subject.pk).exists()
-        )):
-            raise Http404("Предмет скрыт или недоступен")
-
     materials = Material.objects.filter(
         subject=subject, is_published=True
     ).select_related("author", "subject")
@@ -119,15 +109,6 @@ def material_detail(request, slug, material_slug):
                         .prefetch_related("attachments", "links"),
         subject__slug=slug, slug=material_slug, is_published=True,
     )
-
-    # ==== ДОБАВЛЕНО: проверка is_hidden у предмета материала ====
-    if material.subject.is_hidden:
-        user = request.user
-        if not (user.is_superuser or (
-            hasattr(user, 'teacher_profile') and
-            user.teacher_profile.subjects.filter(pk=material.subject.pk).exists()
-        )):
-            raise Http404("Материал скрыт или недоступен")
 
     return render(request, "portal/material.html", {"material": material})
 
