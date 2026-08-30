@@ -25,6 +25,7 @@ from django.utils import timezone
 from .forms import ReviewForm
 from .models import Review, SiteSettings
 from .review_service import make_hash, run_analysis
+from .md_render import render_md
 
 PER_PAGE = 6
 
@@ -67,8 +68,6 @@ def portal_home(request):
 
 
 def all_subjects(request):
-    # Все предметы уже отфильтрованы через контекстный процессор (pub_count считает только не скрытые),
-    # но на всякий случай передадим только не скрытые.
     subjects = Subject.objects.filter(is_hidden=False).select_related('direction')
     return render(request, "portal/subjects.html", {"subjects": subjects})
 
@@ -110,7 +109,14 @@ def material_detail(request, slug, material_slug):
         subject__slug=slug, slug=material_slug, is_published=True,
     )
 
-    return render(request, "portal/material.html", {"material": material})
+    rendered_md = None
+    if material.content_format == "md" and material.content_md:
+        rendered_md = render_md(material.content_md)
+
+    return render(request, "portal/material.html", {
+        "material": material,
+        "rendered_md": rendered_md,
+    })
 
 
 def teachers_list(request):
@@ -158,12 +164,10 @@ def teacher_home(request, code):
     teacher = get_object_or_404(
         TeacherProfile.objects.prefetch_related("subjects"), code=code
     )
-    # Публичные материалы — только не скрытые предметы
     base = teacher.materials.filter(
         is_published=True, subject__is_hidden=False
     ).select_related("subject")
 
-    # Для публичной страницы показываем только не скрытые предметы преподавателя
     public_subjects = list(teacher.subjects.filter(is_hidden=False))
     counts = dict(
         base.values_list("subject_id")
@@ -187,11 +191,9 @@ def teacher_subject(request, code, subject_slug):
     teacher = get_object_or_404(TeacherProfile, code=code)
     subject = get_object_or_404(Subject, slug=subject_slug)
 
-    # Проверяем, что предмет принадлежит преподавателю и не скрыт (или доступен для публики)
     if not teacher.subjects.filter(pk=subject.pk).exists():
         return render(request, "404.html", status=404)
 
-    # ==== ДОБАВЛЕНО: если предмет скрыт, доступ только для авторизованных преподавателей (или суперпользователя) ====
     if subject.is_hidden:
         user = request.user
         if not (user.is_superuser or (
@@ -241,7 +243,6 @@ def search(request):
 
 @axes_dispatch
 def portal_login(request):
-    """Единая страница входа: админ → админка, преподаватель → кабинет."""
     if request.user.is_authenticated:
         if request.user.is_staff or request.user.is_superuser:
             return redirect("admin:index")
@@ -323,6 +324,7 @@ def desk_material_new(request):
         "link_form": link_form,
     })
 
+
 @teacher_required
 def desk_material_edit(request, pk):
     teacher = get_teacher(request)
@@ -347,6 +349,7 @@ def desk_material_edit(request, pk):
         "link_form": LinkForm(prefix="link"),
         "editing": material,
     })
+
 
 @teacher_required
 def desk_material_toggle(request, pk):
@@ -383,10 +386,48 @@ def desk_password(request):
         "password_form": form,
     })
 
+
 @require_POST
 def desk_logout(request):
     auth_logout(request)
     return redirect("portal_home")
+
+
+# ------------------------------------------------------------------
+# Markdown-редактор
+# ------------------------------------------------------------------
+
+@teacher_required
+def desk_md_editor(request):
+    """Страница с MD-редактором (для iframe)."""
+    return render(request, "desk/md_editor.html")
+
+
+@teacher_required
+@require_POST
+def desk_md_image_upload(request):
+    """Загрузка картинки из md-редактора. Возвращает URL."""
+    file = request.FILES.get("image")
+    if not file:
+        return JsonResponse({"error": "Файл не получен"}, status=400)
+
+    allowed = {"image/png", "image/jpeg", "image/gif", "image/webp"}
+    import magic as _magic
+    file.seek(0)
+    mime = _magic.from_buffer(file.read(2048), mime=True)
+    file.seek(0)
+    if mime not in allowed:
+        return JsonResponse({"error": "Только PNG/JPEG/GIF/WebP"}, status=400)
+    if file.size > 1.5 * 1024 * 1024:
+        return JsonResponse({"error": "Максимум 1.5 МБ"}, status=400)
+
+    from django.core.files.storage import default_storage
+    import os
+    # уникальное имя, чтобы не перезаписывать
+    name, ext = os.path.splitext(file.name)
+    path = default_storage.save(f"md_images/{name}_{hashlib.md5(file.read()).hexdigest()[:8]}{ext}", file)
+    return JsonResponse({"url": f"/media/{path}"})
+
 
 # ------------------------------------------------------------------
 # Методический анализ (DeepSeek)
@@ -422,11 +463,12 @@ def desk_review_new(request):
     if not teacher:
         return redirect("portal_home")
 
-    # Дневной лимит
+    # Дневной лимит (ошибки не тратят лимит)
     today_count = Review.objects.filter(
         teacher=teacher,
         created_at__date=timezone.localdate(),
-        from_cache=False,    ).exclude(status=Review.Status.ERROR).count()
+        from_cache=False,
+    ).exclude(status=Review.Status.ERROR).count()
 
     if request.method == "POST":
         form = ReviewForm(request.POST)

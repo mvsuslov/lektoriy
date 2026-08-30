@@ -30,6 +30,7 @@ class TeacherMaterialForm(forms.ModelForm):
     class Meta:
         model = Material
         fields = ("subject", "title", "type", "excerpt", "content",
+                  "content_format", "content_md",
                   "video_url", "embed_code")
         widgets = {
             "subject": forms.HiddenInput(),
@@ -43,6 +44,7 @@ class TeacherMaterialForm(forms.ModelForm):
                 "placeholder": "1–2 предложения: что внутри и для кого",
             }),
             "content": CKEditor5Widget(config_name="default"),
+            "content_md": forms.HiddenInput(),  # заполняется из iframe редактора
             "video_url": forms.URLInput(attrs={
                 "class": "f-input",
                 "placeholder": "https://… (YouTube, RuTube, VK Видео)",
@@ -60,8 +62,17 @@ class TeacherMaterialForm(forms.ModelForm):
         self.fields["subject"].empty_label = None
         self.fields["content"].required = False
         self.fields["content"].label = "Текст материала"
+        self.fields["content_md"].required = False
         self.fields["video_url"].required = False
         self.fields["embed_code"].required = False
+
+    def clean(self):
+        cleaned = super().clean()
+        fmt = cleaned.get("content_format", "html")
+        if fmt == "md" and not cleaned.get("content_md", "").strip():
+            self.add_error("content_format",
+                           "Введите текст в Markdown-редакторе и нажмите «Перенести в материал»")
+        return cleaned
 
     def clean_video_url(self):
         url = self.cleaned_data.get('video_url', '').strip()

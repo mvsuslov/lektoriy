@@ -22,4 +22,7 @@ urlpatterns = [
     path("desk/review/new/", views.desk_review_new, name="desk_review_new"),
     path("desk/review/<int:pk>/", views.desk_review_detail, name="desk_review_detail"),
     path("desk/review/<int:pk>/status/", views.desk_review_status, name="desk_review_status"),
+    # Markdown-редактор
+    path("desk/md-editor/", views.desk_md_editor, name="desk_md_editor"),
+    path("desk/md-editor/upload/", views.desk_md_image_upload, name="desk_md_image_upload"),
 ]

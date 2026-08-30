@@ -52,11 +52,45 @@
     {% for e in form.excerpt.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
   </div>
 
+  <!-- Переключатель формата содержания -->
   <div class="f-group">
+    <label class="f-label">Формат текста</label>
+    <div class="chips">
+      <label class="chip">
+        <input type="radio" name="content_format" value="html" id="fmt_html"
+               {% if form.content_format.value != "md" %}checked{% endif %}>
+        <span>📝 Визуальный редактор</span>
+      </label>
+      <label class="chip">
+        <input type="radio" name="content_format" value="md" id="fmt_md"
+               {% if form.content_format.value == "md" %}checked{% endif %}>
+        <span>∑ Markdown + формулы</span>
+      </label>
+    </div>
+    {% for e in form.content_format.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+  </div>
+
+  <!-- Визуальный редактор (CKEditor) -->
+  <div class="f-group" id="fmt-html-block">
     <label class="f-label" for="{{ form.content.id_for_label }}">Текст материала</label>
     {{ form.content }}
-    <div class="f-hint">Можно оставить пустым, если материал — только файл или видео. Ссылки в тексте станут кликабельными на сайте автоматически.</div>
+    <div class="f-hint">Можно оставить пустым, если материал — только файл или видео.</div>
     {% for e in form.content.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+  </div>
+
+  <!-- Markdown-редактор (iframe) -->
+  <div class="f-group" id="fmt-md-block" style="display:none">
+    <label class="f-label">Текст материала (Markdown)</label>
+    <div class="f-hint" style="margin-bottom:8px">
+      Формулы: <code>$E=mc^2$</code> — инлайн, <code>$$...$$</code> — блочная.
+      Картинки — кнопкой 🖼 в редакторе. Не забудьте нажать «💾 Перенести в материал» внутри редактора!
+    </div>
+    <iframe id="md-frame" src="{% url 'desk_md_editor' %}"
+            style="width:100%;height:520px;border:1.5px solid var(--border);border-radius:12px;background:#fff"></iframe>
+    <div id="md-status" style="margin-top:8px;font-size:13px;color:var(--ok);display:none">
+      ✓ Markdown-текст получен (<span id="md-chars">0</span> символов)
+    </div>
+    {{ form.content_md }}
   </div>
 
   <!-- Блок видео -->
@@ -69,12 +103,11 @@
     </div>
   </div>
 
-  <!-- ====== НОВЫЙ БЛОК: Интерактив (код встраивания) ====== -->
+  <!-- Интерактив -->
   <div class="f-section">
     <h3>🕹 Интерактив (код встраивания)</h3>
     <div class="f-hint">
-      Вставьте iframe-код с PhET, GeoGebra, интерактивной модели или другого сервиса.<br>
-      Например: <code>&lt;iframe src="https://phet.colorado.edu/sims/html/..." width="100%" height="400"&gt;&lt;/iframe&gt;</code>
+      Вставьте iframe-код с PhET, GeoGebra, интерактивной модели или другого сервиса.
     </div>
     <div class="f-group">
       {{ form.embed_code }}
@@ -85,7 +118,7 @@
   {% if not editing %}
   <div class="f-section">
     <h3>📎 Файл (необязательно)</h3>
-    <div class="f-hint">Максимум 2 МБ — конспект в PDF, карточки в DOCX. Файл больше? Загрузите его на Яндекс.Диск или облако Mail и добавьте ссылку ниже.</div>
+    <div class="f-hint">Максимум 2 МБ — конспект в PDF, карточки в DOCX.</div>
     <div class="f-group">
       <label for="{{ file_form.file.id_for_label }}" class="file-btn">📂 Выбрать файл</label>
       <span class="file-name" id="fileName">Файл не выбран</span>
@@ -114,13 +147,50 @@
   </div>
 </form>
 
-{% if not editing %}
 <script>
-// Показываем имя выбранного файла рядом с кнопкой
+// Переключение форматов
+const htmlBlock = document.getElementById('fmt-html-block');
+const mdBlock = document.getElementById('fmt-md-block');
+const fmtHtmlRadio = document.getElementById('fmt_html');
+const fmtMdRadio = document.getElementById('fmt_md');
+
+function toggleFmt() {
+  if (fmtMdRadio.checked) {
+    htmlBlock.style.display = 'none';
+    mdBlock.style.display = '';
+  } else {
+    htmlBlock.style.display = '';
+    mdBlock.style.display = 'none';
+  }
+}
+fmtHtmlRadio.addEventListener('change', toggleFmt);
+fmtMdRadio.addEventListener('change', toggleFmt);
+toggleFmt(); // при загрузке
+
+// Приём текста из MD-редактора (iframe)
+const mdField = document.getElementById('id_content_md');
+const mdFrame = document.getElementById('md-frame');
+
+window.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'scimd-content') {
+    mdField.value = e.data.text;
+    document.getElementById('md-chars').textContent = e.data.text.length;
+    document.getElementById('md-status').style.display = '';
+  }
+  if (e.data && e.data.type === 'scimd-ready') {
+    // режим редактирования: подсунуть существующий текст в iframe
+    if (mdField.value) {
+      mdFrame.contentWindow.postMessage({type: 'scimd-load', text: mdField.value}, '*');
+    }
+  }
+});
+
+{% if not editing %}
+// Показываем имя выбранного файла
 document.getElementById("{{ file_form.file.id_for_label }}").addEventListener("change", function(){
   document.getElementById("fileName").textContent =
     this.files.length ? this.files[0].name : "Файл не выбран";
 });
-</script>
 {% endif %}
+</script>
 {% endblock %}

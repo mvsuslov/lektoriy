@@ -6,11 +6,15 @@ Django==5.0.14
 django-axes==8.3.1
 django-ckeditor-5==0.2.20
 idna==3.18
+latex2mathml==3.81.0
+Markdown==3.10.3
 pillow==12.3.0
 psycopg==3.3.4
 psycopg-binary==3.3.4
+pymdown-extensions==11.0.2
 python-decouple==3.8
 python-magic==0.4.27
+PyYAML==6.0.3
 requests==2.34.2
 sqlparse==0.5.5
 typing_extensions==4.16.0

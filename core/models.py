@@ -341,6 +341,12 @@ class Material(models.Model):
         help_text="Показывается в карточке материала"
     )
     content = CKEditor5Field("Содержание", config_name="default", blank=True)
+    content_format = models.CharField(
+        "Формат содержания", max_length=10,
+        choices=[("html", "Визуальный редактор"), ("md", "Markdown с формулами")],
+        default="html"
+    )
+    content_md = models.TextField("Содержание (Markdown)", blank=True)
     video_url = models.URLField(
         "Ссылка на видео", blank=True,
         help_text="YouTube, RuTube или VK Видео — будет встроен плеер"
