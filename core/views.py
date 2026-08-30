@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth import logout as auth_logout
 from django.views.decorators.http import require_POST
 from django.conf import settings
+from django.views.decorators.clickjacking import xframe_options_exempt
 
 from axes.decorators import axes_dispatch
 
@@ -398,6 +399,7 @@ def desk_logout(request):
 # ------------------------------------------------------------------
 
 @teacher_required
+@xframe_options_exempt
 def desk_md_editor(request):
     """Страница с MD-редактором (для iframe)."""
     return render(request, "desk/md_editor.html")
