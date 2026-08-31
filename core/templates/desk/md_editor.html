@@ -103,7 +103,6 @@ html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--t
 const editor = document.getElementById('editor');
 const preview = document.getElementById('preview');
 let renderTimer;
-let scrollSyncLock = false;
 
 marked.setOptions({ breaks: false, gfm: true, headerIds: true, mangle: false });
 
@@ -112,13 +111,6 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-function syncScrollFromEditor() {
-  const max = editor.scrollHeight - editor.clientHeight;
-  const ratio = max > 0 ? editor.scrollTop / max : 0;
-  const prevMax = preview.scrollHeight - preview.clientHeight;
-  preview.scrollTop = ratio * prevMax;
 }
 
 function render() {
@@ -145,31 +137,13 @@ function render() {
     }
   });
   preview.innerHTML = html;
-  syncScrollFromEditor();
   document.getElementById('stat-chars').innerHTML = `Символов: <b>${src.length}</b>`;
   document.getElementById('stat-formulas').innerHTML = `Формул: <b>${mathBlocks.length}</b>`;
+  rebuildScrollAnchors();
 }
 
 function scheduleRender() { clearTimeout(renderTimer); renderTimer = setTimeout(render, 250); }
 editor.addEventListener('input', scheduleRender);
-
-/* ── Синхронная прокрутка ── */
-editor.addEventListener('scroll', () => {
-  if (scrollSyncLock) return;
-  scrollSyncLock = true;
-  syncScrollFromEditor();
-  scrollSyncLock = false;
-});
-
-preview.addEventListener('scroll', () => {
-  if (scrollSyncLock) return;
-  scrollSyncLock = true;
-  const max = preview.scrollHeight - preview.clientHeight;
-  const ratio = max > 0 ? preview.scrollTop / max : 0;
-  const edMax = editor.scrollHeight - editor.clientHeight;
-  editor.scrollTop = ratio * edMax;
-  scrollSyncLock = false;
-});
 
 function insertMd(before, after) {
   const s = editor.selectionStart, e = editor.selectionEnd;
@@ -204,6 +178,117 @@ function applyHeading(level) {
   editor.focus();
   scheduleRender();
 }
+
+/* ═══ Синхронная прокрутка по якорям (заголовкам) ═══ */
+let isSyncingScroll = false;
+let scrollAnchors = [{ editorY: 0, previewY: 0 }];
+let editorMirror = null;
+
+function getEditorMirror() {
+  if (!editorMirror) {
+    editorMirror = document.createElement('div');
+    editorMirror.style.position = 'absolute';
+    editorMirror.style.visibility = 'hidden';
+    editorMirror.style.top = '0';
+    editorMirror.style.left = '-99999px';
+    editorMirror.style.whiteSpace = 'pre-wrap';
+    editorMirror.style.wordWrap = 'break-word';
+    editorMirror.style.overflowWrap = 'break-word';
+    document.body.appendChild(editorMirror);
+  }
+  const cs = window.getComputedStyle(editor);
+  editorMirror.style.boxSizing   = cs.boxSizing;
+  editorMirror.style.width       = editor.clientWidth + 'px';
+  editorMirror.style.font        = cs.font;
+  editorMirror.style.fontFamily  = cs.fontFamily;
+  editorMirror.style.fontSize    = cs.fontSize;
+  editorMirror.style.fontWeight  = cs.fontWeight;
+  editorMirror.style.lineHeight  = cs.lineHeight;
+  editorMirror.style.letterSpacing = cs.letterSpacing;
+  editorMirror.style.wordSpacing = cs.wordSpacing;
+  editorMirror.style.tabSize     = cs.tabSize;
+  editorMirror.style.padding     = cs.padding;
+  editorMirror.style.borderWidth = cs.borderWidth;
+  editorMirror.style.borderStyle = cs.borderStyle;
+  return editorMirror;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function rebuildScrollAnchors() {
+  const headings = preview.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  const val = editor.value;
+
+  const editorMax  = Math.max(0, editor.scrollHeight  - editor.clientHeight);
+  const previewMax = Math.max(0, preview.scrollHeight - preview.clientHeight);
+
+  if (headings.length === 0) {
+    scrollAnchors = [{ editorY: 0, previewY: 0 }, { editorY: editorMax, previewY: previewMax }];
+    return;
+  }
+
+  let searchFrom = 0;
+  const charIndices = [];
+  headings.forEach(h => {
+    const text = h.textContent;
+    if (!text) { charIndices.push(null); return; }
+    const idx = val.indexOf(text, searchFrom);
+    if (idx === -1) { charIndices.push(null); return; }
+    searchFrom = idx + text.length;
+    charIndices.push(idx);
+  });
+
+  const mirror = getEditorMirror();
+  let html = '';
+  let last = 0;
+  charIndices.forEach((idx, i) => {
+    if (idx === null) return;
+    html += escapeHtml(val.substring(last, idx));
+    html += `<span data-a="${i}"></span>`;
+    last = idx;
+  });
+  html += escapeHtml(val.substring(last));
+  mirror.innerHTML = html;
+
+  const anchors = [{ editorY: 0, previewY: 0 }];
+  headings.forEach((h, i) => {
+    if (charIndices[i] === null) return;
+    const span = mirror.querySelector(`span[data-a="${i}"]`);
+    if (!span) return;
+    anchors.push({ editorY: span.offsetTop, previewY: h.offsetTop });
+  });
+
+  anchors.push({ editorY: editorMax, previewY: previewMax });
+  anchors.sort((a, b) => a.editorY - b.editorY);
+  scrollAnchors = anchors;
+}
+
+function syncScrollByAnchors(source, target, sourceKey, targetKey) {
+  if (isSyncingScroll) return;
+  isSyncingScroll = true;
+
+  const sY = source.scrollTop;
+  const anchors = scrollAnchors;
+
+  let i = 0;
+  while (i < anchors.length - 1 && anchors[i + 1][sourceKey] < sY) i++;
+  const a = anchors[i];
+  const b = anchors[Math.min(i + 1, anchors.length - 1)];
+
+  const segLen = b[sourceKey] - a[sourceKey];
+  const ratio = segLen > 0 ? (sY - a[sourceKey]) / segLen : 0;
+
+  target.scrollTop = a[targetKey] + ratio * (b[targetKey] - a[targetKey]);
+
+  requestAnimationFrame(() => { isSyncingScroll = false; });
+}
+
+editor.addEventListener('scroll', () => syncScrollByAnchors(editor, preview, 'editorY', 'previewY'));
+preview.addEventListener('scroll', () => syncScrollByAnchors(preview, editor, 'previewY', 'editorY'));
+window.addEventListener('resize', rebuildScrollAnchors);
+/* ═══ /Синхронная прокрутка ═══ */
 
 editor.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); insertMd('**','**'); }
