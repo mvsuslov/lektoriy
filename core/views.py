@@ -11,6 +11,7 @@ from django.contrib.auth import logout as auth_logout
 from django.views.decorators.http import require_POST
 from django.conf import settings
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.core.cache import cache
 
 from axes.decorators import axes_dispatch
 
@@ -112,13 +113,16 @@ def material_detail(request, slug, material_slug):
 
     rendered_md = None
     if material.content_format == "md" and material.content_md:
-        rendered_md = render_md(material.content_md)
+        cache_key = f"md_{material.pk}_{int(material.updated_at.timestamp())}"
+        rendered_md = cache.get(cache_key)
+        if rendered_md is None:
+            rendered_md = render_md(material.content_md)
+            cache.set(cache_key, rendered_md, 60 * 60 * 24 * 7)  # 7 дней
 
     return render(request, "portal/material.html", {
         "material": material,
         "rendered_md": rendered_md,
     })
-
 
 def teachers_list(request):
     query = request.GET.get("q", "").strip()

@@ -103,6 +103,7 @@ html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--t
 const editor = document.getElementById('editor');
 const preview = document.getElementById('preview');
 let renderTimer;
+let scrollSyncLock = false;
 
 marked.setOptions({ breaks: false, gfm: true, headerIds: true, mangle: false });
 
@@ -111,6 +112,13 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function syncScrollFromEditor() {
+  const max = editor.scrollHeight - editor.clientHeight;
+  const ratio = max > 0 ? editor.scrollTop / max : 0;
+  const prevMax = preview.scrollHeight - preview.clientHeight;
+  preview.scrollTop = ratio * prevMax;
 }
 
 function render() {
@@ -137,12 +145,31 @@ function render() {
     }
   });
   preview.innerHTML = html;
+  syncScrollFromEditor();
   document.getElementById('stat-chars').innerHTML = `Символов: <b>${src.length}</b>`;
   document.getElementById('stat-formulas').innerHTML = `Формул: <b>${mathBlocks.length}</b>`;
 }
 
 function scheduleRender() { clearTimeout(renderTimer); renderTimer = setTimeout(render, 250); }
 editor.addEventListener('input', scheduleRender);
+
+/* ── Синхронная прокрутка ── */
+editor.addEventListener('scroll', () => {
+  if (scrollSyncLock) return;
+  scrollSyncLock = true;
+  syncScrollFromEditor();
+  scrollSyncLock = false;
+});
+
+preview.addEventListener('scroll', () => {
+  if (scrollSyncLock) return;
+  scrollSyncLock = true;
+  const max = preview.scrollHeight - preview.clientHeight;
+  const ratio = max > 0 ? preview.scrollTop / max : 0;
+  const edMax = editor.scrollHeight - editor.clientHeight;
+  editor.scrollTop = ratio * edMax;
+  scrollSyncLock = false;
+});
 
 function insertMd(before, after) {
   const s = editor.selectionStart, e = editor.selectionEnd;
