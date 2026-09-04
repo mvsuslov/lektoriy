@@ -12,6 +12,8 @@ urlpatterns = [
     path("upr-m4x8k2/", admin.site.urls),
     path("ckeditor5/", include("django_ckeditor_5.urls")),
     path("", include("core.urls")),
+    path('ckeditor/', include('ckeditor_uploader.urls')),
+
 ]
 
 if settings.DEBUG:

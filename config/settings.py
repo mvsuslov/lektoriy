@@ -61,6 +61,8 @@ INSTALLED_APPS = [
     'django_ckeditor_5',
     'axes',
     'core',
+    'ckeditor',
+    'ckeditor_uploader',
 ]
 
 MIDDLEWARE = [
@@ -170,6 +172,10 @@ CSRF_TRUSTED_ORIGINS = [
     "https://phys-it.ru",
     "https://www.phys-it.ru",
 ]
+
+CKEDITOR_UPLOAD_PATH = 'uploads/admin/'   # картинки пойдут в media/uploads/admin/
+CKEDITOR_IMAGE_BACKEND = 'pillow'          # для нормализации (pillow у вас уже есть)
+CKEDITOR_ALLOW_NONIMAGE_FILES = False
 
 # ==== Настройка логирования ====
 LOGGING = {

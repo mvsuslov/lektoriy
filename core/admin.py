@@ -4,6 +4,10 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.utils.safestring import mark_safe
 from .models import Review, SiteSettings
+from django import forms
+from django.contrib import admin
+from ckeditor_uploader.widgets import CKEditorUploadingWidget
+from .models import Material
 
 from .models import (Attachment, Direction, Link, Material, Subject,
                      TeacherProfile)
@@ -179,8 +183,16 @@ class LinkInline(admin.TabularInline):
 
 
 # ============ Материалы — преподаватель видит только свои ============
+class MaterialAdminForm(forms.ModelForm):
+    content = forms.CharField(widget=CKEditorUploadingWidget(), required=False)
+
+    class Meta:
+        model = Material
+        fields = '__all_'
+
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
+    form = MaterialAdminForm
     list_display = ("title", "subject", "type", "author_name", "is_published", "created_at")
     list_filter = ("subject", "type", "is_published")
     search_fields = ("title", "excerpt")
