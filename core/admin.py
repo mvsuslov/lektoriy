@@ -188,7 +188,7 @@ class MaterialAdminForm(forms.ModelForm):
 
     class Meta:
         model = Material
-        fields = '__all_'
+        fields = '__all__'
 
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
