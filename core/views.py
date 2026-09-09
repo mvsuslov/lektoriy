@@ -611,20 +611,38 @@ def portal_register(request):
     })
 
 
+# Таблица транслитерации первых букв (кириллица → латиница)
+TRANSLIT = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
+    'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+    'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+    'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+    'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+}
+
+def _make_code_from_initials(first_name, middle_name, last_name):
+    """Инициалы ФИО → латинский код. Михаил Владимирович Суслов → mvs."""
+    parts = []
+    for name in (first_name, middle_name, last_name):
+        name = name.strip()
+        if not name:
+            continue
+        ch = name[0].lower()
+        # Если уже латиница — берём как есть, иначе транслитерируем
+        parts.append(ch if 'a' <= ch <= 'z' else TRANSLIT.get(ch, ''))
+    return ''.join(parts) or 'teacher'
+
+
 def approve_application(app: TeacherApplication, note=""):
     """Одобрение заявки: активирует пользователя, создаёт профиль, привязывает предметы."""
     from django.utils import timezone
-    from django.utils.text import slugify
-    import re as _re
     import random
 
     User = get_user_model()
     user = User.objects.get(username=app.email)
 
-    # Код: фамилия → латиница, при конфликте добавляем цифру
-    # Пример: Суслов → suslov, второй Суслов → suslov2
-    base = slugify(app.last_name, allow_unicode=False) or "teacher"
-    base = _re.sub(r'[^a-z0-9]', '', base)[:35] or "teacher"
+    # Код из инициалов: mvs, при конфликте mvs2, mvs3...
+    base = _make_code_from_initials(app.first_name, app.middle_name, app.last_name)
     code, i = base, 2
     while TeacherProfile.objects.filter(code=code).exists():
         code = f"{base}{i}"
