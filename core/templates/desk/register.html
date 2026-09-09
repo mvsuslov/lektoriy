@@ -5,8 +5,8 @@
 
 <form method="post" class="card">
   {% csrf_token %}
-  <input type="hidden" name="_a" value="{{ form._a }}">
-  <input type="hidden" name="_b" value="{{ form._b }}">
+  <input type="hidden" name="_a" value="{{ captcha_a }}">
+  <input type="hidden" name="_b" value="{{ captcha_b }}">
 
   <div class="f-section"><h3>🔐 Вход</h3>
     <div class="f-group">

@@ -604,7 +604,11 @@ def portal_register(request):
     else:
         form = TeacherRegisterForm()
 
-    return render(request, "desk/register.html", {"form": form})
+    return render(request, "desk/register.html", {
+        "form": form,
+        "captcha_a": form._a,
+        "captcha_b": form._b,
+    })
 
 
 def approve_application(app: TeacherApplication, note=""):
