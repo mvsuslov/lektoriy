@@ -492,3 +492,45 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.get_level_display()})"
+
+class TeacherApplication(models.Model):
+    """Заявка на регистрацию преподавателя. Одобряет админ одним кликом."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "⏳ Ожидает"
+        APPROVED = "approved", "✅ Одобрена"
+        REJECTED = "rejected", "❌ Отклонена"
+
+    email = models.EmailField("Email (логин)", unique=True)
+    first_name = models.CharField("Имя", max_length=50)
+    middle_name = models.CharField("Отчество", max_length=50)
+    last_name = models.CharField("Фамилия", max_length=50)
+    role = models.CharField("Должность", max_length=150, blank=True)
+    desired_subjects = models.ManyToManyField(
+        Subject, related_name="applications", verbose_name="Желаемые предметы"
+    )
+    subject_tagline = models.CharField(
+        "Слоган к предмету", max_length=250, blank=True,
+        help_text="Например: «Физика — просто и с интересом»"
+    )
+    about = models.TextField(
+        "О себе / чему учите", blank=True,
+        help_text="Пара слов для администратора: где работаете, стаж и т.п."
+    )
+    status = models.CharField(
+        "Статус", max_length=10, choices=Status.choices, default=Status.PENDING
+    )
+    created_at = models.DateTimeField("Подана", auto_now_add=True)
+    reviewed_at = models.DateTimeField("Рассмотрена", null=True, blank=True)
+    note = models.CharField(
+        "Заметка администратора", max_length=300, blank=True,
+        help_text="Внутренняя пометка (например, причина отклонения)"
+    )
+
+    class Meta:
+        verbose_name = "Заявка на регистрацию"
+        verbose_name_plural = "Заявки на регистрацию"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.last_name} {self.first_name} ({self.email})"

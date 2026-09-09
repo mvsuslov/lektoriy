@@ -204,3 +204,108 @@ class ReviewForm(forms.Form):
                 f"{dj_settings.REVIEW_MAX_CHARS} символов."
             )
         return text
+
+import random
+
+class TeacherRegisterForm(forms.Form):
+    email = forms.EmailField(
+        label="Email (будет логином)",
+        widget=forms.EmailInput(attrs={"class": "f-input", "placeholder": "you@example.com"})
+    )
+    password1 = forms.CharField(
+        label="Пароль", min_length=8,
+        widget=forms.PasswordInput(attrs={"class": "f-input", "placeholder": "Минимум 8 символов"})
+    )
+    password2 = forms.CharField(
+        label="Пароль ещё раз",
+        widget=forms.PasswordInput(attrs={"class": "f-input"})
+    )
+    last_name = forms.CharField(
+        label="Фамилия", max_length=50,
+        widget=forms.TextInput(attrs={"class": "f-input"})
+    )
+    first_name = forms.CharField(
+        label="Имя", max_length=50,
+        widget=forms.TextInput(attrs={"class": "f-input"})
+    )
+    middle_name = forms.CharField(
+        label="Отчество", max_length=50,
+        widget=forms.TextInput(attrs={"class": "f-input"})
+    )
+    role = forms.CharField(
+        label="Должность", max_length=150, required=False,
+        widget=forms.TextInput(attrs={
+            "class": "f-input", "placeholder": "Например: учитель физики, МБОУ СОШ №5"
+        })
+    )
+    subjects = forms.ModelMultipleChoiceField(
+        label="Предметы, которые будете вести",
+        queryset=Subject.objects.filter(is_hidden=False),
+        widget=forms.CheckboxSelectMultiple
+    )
+    subject_tagline = forms.CharField(
+        label="Слоган к предмету", max_length=250, required=False,
+        widget=forms.TextInput(attrs={
+            "class": "f-input", "placeholder": "Например: Физика — просто и с интересом"
+        })
+    )
+    about = forms.CharField(
+        label="Пара слов о себе", required=False,
+        widget=forms.Textarea(attrs={
+            "class": "f-input", "rows": 3,
+            "placeholder": "Где работаете, стаж, что планируете публиковать…"
+        })
+    )
+    # Антибот: honeypot + математический вопрос
+    website = forms.CharField(required=False, widget=forms.HiddenInput)
+    captcha = forms.IntegerField(label="Антибот-вопрос")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._a, self._b = random.randint(2, 9), random.randint(2, 9)
+        self.fields["captcha"].label = f"Сколько будет {self._a} + {self._b}?"
+        self.fields["captcha"].widget.attrs.update({
+            "class": "f-input", "placeholder": "Ответ цифрой", "autocomplete": "off"
+        })
+        if self.data:
+            try:
+                self._a = int(self.data.get("_a", 0))
+                self._b = int(self.data.get("_b", 0))
+                self.fields["captcha"].label = f"Сколько будет {self._a} + {self._b}?"
+            except (TypeError, ValueError):
+                pass
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        if User.objects.filter(username=email).exists():
+            raise forms.ValidationError("Аккаунт с таким email уже существует.")
+        from .models import TeacherApplication
+        if TeacherApplication.objects.filter(email=email, status="pending").exists():
+            raise forms.ValidationError("Заявка с этим email уже подана и ожидает рассмотрения.")
+        return email
+
+    def clean_website(self):
+        # honeypot: боты заполняют скрытое поле
+        if self.cleaned_data.get("website"):
+            raise forms.ValidationError("Спам.")
+        return ""
+
+    def clean_captcha(self):
+        val = self.cleaned_data.get("captcha")
+        try:
+            a = int(self.data.get("_a", -1))
+            b = int(self.data.get("_b", -1))
+        except (TypeError, ValueError):
+            raise forms.ValidationError("Ошибка проверки. Попробуйте ещё раз.")
+        if val != a + b:
+            raise forms.ValidationError("Неверный ответ. Попробуйте ещё раз.")
+        return val
+
+    def clean(self):
+        cleaned = super().clean()
+        p1, p2 = cleaned.get("password1"), cleaned.get("password2")
+        if p1 and p2 and p1 != p2:
+            self.add_error("password2", "Пароли не совпадают.")
+        return cleaned

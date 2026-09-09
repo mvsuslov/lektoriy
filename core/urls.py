@@ -25,4 +25,5 @@ urlpatterns = [
     # Markdown-редактор
     path("desk/md-editor/", views.desk_md_editor, name="desk_md_editor"),
     path("desk/md-editor/upload/", views.desk_md_image_upload, name="desk_md_image_upload"),
+    path("register/", views.portal_register, name="portal_register"),
 ]

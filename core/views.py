@@ -29,6 +29,12 @@ from .models import Review, SiteSettings
 from .review_service import make_hash, run_analysis
 from .md_render import render_md
 
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth import get_user_model
+from .forms import TeacherRegisterForm
+from .models import TeacherApplication
+import secrets
+
 PER_PAGE = 6
 
 
@@ -562,3 +568,79 @@ def desk_review_list(request):
     return render(request, "desk/review_list.html", {
         "teacher": teacher, "reviews": reviews,
     })
+
+# ------------------------------------------------------------------
+# Регистрация преподавателей
+# ------------------------------------------------------------------
+
+def portal_register(request):
+    if request.user.is_authenticated:
+        return redirect("desk_home")
+
+    if request.method == "POST":
+        form = TeacherRegisterForm(request.POST)
+        if form.is_valid():
+            User = get_user_model()
+            email = form.cleaned_data["email"]
+
+            # Пользователь создаётся сразу, но неактивным
+            user = User.objects.create(
+                username=email,
+                email=email,
+                password=make_password(form.cleaned_data["password1"]),
+                is_active=False,
+            )
+            app = TeacherApplication.objects.create(
+                email=email,
+                first_name=form.cleaned_data["first_name"],
+                middle_name=form.cleaned_data["middle_name"],
+                last_name=form.cleaned_data["last_name"],
+                role=form.cleaned_data.get("role", ""),
+                subject_tagline=form.cleaned_data.get("subject_tagline", ""),
+                about=form.cleaned_data.get("about", ""),
+            )
+            app.desired_subjects.set(form.cleaned_data["subjects"])
+            return render(request, "desk/register_done.html", {"email": email})
+    else:
+        form = TeacherRegisterForm()
+
+    return render(request, "desk/register.html", {"form": form})
+
+
+def approve_application(app: TeacherApplication, note=""):
+    """Одобрение заявки: активирует пользователя, создаёт профиль, привязывает предметы."""
+    from django.utils import timezone
+    from django.utils.text import slugify
+    import re as _re
+
+    User = get_user_model()
+    user = User.objects.get(username=app.email)
+
+    # Код профиля из фамилии: petrova, при конфликте petrova2
+    base = slugify(app.last_name, allow_unicode=False) or "teacher"
+    base = _re.sub(r'[^a-z0-9-]', '', base)[:40] or "teacher"
+    code, i = base, 2
+    while TeacherProfile.objects.filter(code=code).exists():
+        code = f"{base}{i}"
+        i += 1
+
+    user.is_active = True
+    user.save(update_fields=["is_active"])
+
+    profile = TeacherProfile.objects.create(
+        user=user,
+        first_name=app.first_name,
+        middle_name=app.middle_name,
+        last_name=app.last_name,
+        code=code,
+        role=app.role,
+        bio=app.about,
+        brand_tagline=app.subject_tagline,
+    )
+    profile.subjects.set(app.desired_subjects.all())
+
+    app.status = TeacherApplication.Status.APPROVED
+    app.reviewed_at = timezone.now()
+    app.note = note
+    app.save(update_fields=["status", "reviewed_at", "note"])
+    return profile

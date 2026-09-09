@@ -1,0 +1,13 @@
+{% extends "desk/base.html" %}
+{% block content %}
+<h1>✓ Заявка отправлена!</h1>
+<div class="sub">
+  Мы проверим данные и активируем ваш аккаунт (<b>{{ email }}</b>) в ближайшее время.
+</div>
+<div class="card" style="padding:20px;margin-top:16px">
+  <p>Если в течение суток аккаунт не активировался — напишите администратору в Макс.</p>
+  <p style="margin-top:12px">
+    <a class="btn" href="{% url 'portal_home' %}">← На главную</a>
+  </p>
+</div>
+{% endblock %}

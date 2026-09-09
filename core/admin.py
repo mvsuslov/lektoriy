@@ -12,6 +12,9 @@ from .models import Material
 from .models import (Attachment, Direction, Link, Material, Subject,
                      TeacherProfile)
 
+from django.utils import timezone
+from .models import TeacherApplication
+
 User = get_user_model()
 
 
@@ -316,4 +319,68 @@ class ReviewAdmin(admin.ModelAdmin):
         return is_super(request.user)
 
     def has_delete_permission(self, request, obj=None):
+        return is_super(request.user)
+
+
+@admin.register(TeacherApplication)
+class TeacherApplicationAdmin(admin.ModelAdmin):
+    list_display = ("__str__", "status_colored", "subjects_wanted", "created_at")
+    list_filter = ("status", "created_at")
+    search_fields = ("email", "last_name", "first_name")
+    readonly_fields = ("email", "first_name", "middle_name", "last_name",
+                       "role", "subject_tagline", "about",
+                       "created_at", "reviewed_at")
+    filter_horizontal = ("desired_subjects",)
+    actions = ("approve", "reject")
+
+    fieldsets = (
+        ("Заявитель", {
+            "fields": ("email", "last_name", "first_name", "middle_name", "role")
+        }),
+        ("Запрос", {
+            "fields": ("desired_subjects", "subject_tagline", "about")
+        }),
+        ("Решение", {
+            "fields": ("status", "note", "created_at", "reviewed_at")
+        }),
+    )
+
+    @admin.display(description="Статус", ordering="status")
+    def status_colored(self, obj):
+        colors = {"pending": "#D97706", "approved": "#16A34A", "rejected": "#DC2626"}
+        return mark_safe(
+            f'<b style="color:{colors.get(obj.status, "#333")}">{obj.get_status_display()}</b>'
+        )
+
+    @admin.display(description="Предметы")
+    def subjects_wanted(self, obj):
+        return ", ".join(s.name for s in obj.desired_subjects.all())
+
+    @admin.action(description="✅ Одобрить выбранные заявки")
+    def approve(self, request, queryset):
+        from .views import approve_application
+        ok, errors = 0, 0
+        for app in queryset.filter(status=TeacherApplication.Status.PENDING):
+            try:
+                approve_application(app)
+                ok += 1
+            except Exception as e:
+                errors += 1
+                self.message_user(request, f"⚠ {app.email}: {e}", level="error")
+        if ok:
+            self.message_user(request, f"Одобрено заявок: {ok}. Профили созданы, пользователи активированы.")
+
+    @admin.action(description="❌ Отклонить выбранные заявки")
+    def reject(self, request, queryset):
+        updated = queryset.filter(status=TeacherApplication.Status.PENDING).update(
+            status=TeacherApplication.Status.REJECTED,
+            reviewed_at=timezone.now(),
+        )
+        if updated:
+            self.message_user(request, f"Отклонено заявок: {updated}. Аккаунты остались неактивными.")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_module_permission(self, request):
         return is_super(request.user)

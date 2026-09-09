@@ -1,0 +1,89 @@
+{% extends "desk/base.html" %}
+{% block content %}
+<h1>Регистрация преподавателя</h1>
+<div class="sub">Заполните заявку — после одобрения администратором вы получите доступ к кабинету.</div>
+
+<form method="post" class="card">
+  {% csrf_token %}
+  <input type="hidden" name="_a" value="{{ form._a }}">
+  <input type="hidden" name="_b" value="{{ form._b }}">
+
+  <div class="f-section"><h3>🔐 Вход</h3>
+    <div class="f-group">
+      <label class="f-label">{{ form.email.label }}</label>
+      {{ form.email }}
+      {% for e in form.email.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+    </div>
+    <div class="f-group">
+      <label class="f-label">{{ form.password1.label }}</label>
+      {{ form.password1 }}
+      {% for e in form.password1.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+    </div>
+    <div class="f-group">
+      <label class="f-label">{{ form.password2.label }}</label>
+      {{ form.password2 }}
+      {% for e in form.password2.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+    </div>
+  </div>
+
+  <div class="f-section"><h3>👤 О себе</h3>
+    <div class="f-group">
+      <label class="f-label">{{ form.last_name.label }}</label>
+      {{ form.last_name }}
+      {% for e in form.last_name.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+    </div>
+    <div class="f-group">
+      <label class="f-label">{{ form.first_name.label }}</label>
+      {{ form.first_name }}
+      {% for e in form.first_name.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+    </div>
+    <div class="f-group">
+      <label class="f-label">{{ form.middle_name.label }}</label>
+      {{ form.middle_name }}
+      {% for e in form.middle_name.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+    </div>
+    <div class="f-group">
+      <label class="f-label">{{ form.role.label }}</label>
+      {{ form.role }}
+      <div class="f-hint">Необязательно — где работаете</div>
+    </div>
+  </div>
+
+  <div class="f-section"><h3>📚 Предметы</h3>
+    <div class="f-group">
+      <label class="f-label">{{ form.subjects.label }}</label>
+      <div class="chips">
+        {% for choice in form.subjects %}
+        <label class="chip">{{ choice.tag }} <span>{{ choice.choice_label }}</span></label>
+        {% endfor %}
+      </div>
+      <div class="f-hint">Администратор проверит и привяжет предметы к вашему профилю</div>
+      {% for e in form.subjects.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+    </div>
+    <div class="f-group">
+      <label class="f-label">{{ form.subject_tagline.label }}</label>
+      {{ form.subject_tagline }}
+      <div class="f-hint">Необязательно — появится в вашем кабинете</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">{{ form.about.label }}</label>
+      {{ form.about }}
+      <div class="f-hint">Необязательно — поможет администратору быстрее одобрить заявку</div>
+    </div>
+  </div>
+
+  <div class="f-section"><h3>🤖 Проверка</h3>
+    <div class="f-group">
+      <label class="f-label">{{ form.captcha.label }}</label>
+      {{ form.captcha }}
+      {% for e in form.captcha.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+    </div>
+    {{ form.website }}
+  </div>
+
+  <div style="margin-top:26px;display:flex;gap:12px;flex-wrap:wrap">
+    <button type="submit" class="btn">Отправить заявку</button>
+    <a class="btn btn-ghost" href="{% url 'portal_login' %}">Уже есть аккаунт?</a>
+  </div>
+</form>
+{% endblock %}
