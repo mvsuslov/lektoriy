@@ -222,15 +222,15 @@ class TeacherRegisterForm(forms.Form):
     )
     last_name = forms.CharField(
         label="Фамилия", max_length=50,
-        widget=forms.TextInput(attrs={"class": "f-input"})
+        widget=forms.TextInput(attrs={"class": "f-input", "placeholder": "Иванов"})
     )
     first_name = forms.CharField(
         label="Имя", max_length=50,
-        widget=forms.TextInput(attrs={"class": "f-input"})
+        widget=forms.TextInput(attrs={"class": "f-input", "placeholder": "Иван"})
     )
     middle_name = forms.CharField(
         label="Отчество", max_length=50,
-        widget=forms.TextInput(attrs={"class": "f-input"})
+        widget=forms.TextInput(attrs={"class": "f-input", "placeholder": "Иванович"})
     )
     role = forms.CharField(
         label="Должность", max_length=150, required=False,
@@ -256,24 +256,23 @@ class TeacherRegisterForm(forms.Form):
             "placeholder": "Где работаете, стаж, что планируете публиковать…"
         })
     )
-    # Антибот: honeypot + математический вопрос
+    # Антибот
     website = forms.CharField(required=False, widget=forms.HiddenInput)
     captcha = forms.IntegerField(label="Антибот-вопрос")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._a, self._b = random.randint(2, 9), random.randint(2, 9)
-        self.fields["captcha"].label = f"Сколько будет {self._a} + {self._b}?"
-        self.fields["captcha"].widget.attrs.update({
-            "class": "f-input", "placeholder": "Ответ цифрой", "autocomplete": "off"
-        })
         if self.data:
             try:
                 self._a = int(self.data.get("_a", 0))
                 self._b = int(self.data.get("_b", 0))
-                self.fields["captcha"].label = f"Сколько будет {self._a} + {self._b}?"
             except (TypeError, ValueError):
                 pass
+        self.fields["captcha"].label = f"Сколько будет {self._a} + {self._b}?"
+        self.fields["captcha"].widget.attrs.update({
+            "class": "f-input", "placeholder": "Ответ цифрой", "autocomplete": "off"
+        })
 
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
@@ -287,7 +286,6 @@ class TeacherRegisterForm(forms.Form):
         return email
 
     def clean_website(self):
-        # honeypot: боты заполняют скрытое поле
         if self.cleaned_data.get("website"):
             raise forms.ValidationError("Спам.")
         return ""

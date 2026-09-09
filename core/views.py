@@ -616,13 +616,15 @@ def approve_application(app: TeacherApplication, note=""):
     from django.utils import timezone
     from django.utils.text import slugify
     import re as _re
+    import random
 
     User = get_user_model()
     user = User.objects.get(username=app.email)
 
-    # Код профиля из фамилии: petrova, при конфликте petrova2
+    # Код: фамилия → латиница, при конфликте добавляем цифру
+    # Пример: Суслов → suslov, второй Суслов → suslov2
     base = slugify(app.last_name, allow_unicode=False) or "teacher"
-    base = _re.sub(r'[^a-z0-9-]', '', base)[:40] or "teacher"
+    base = _re.sub(r'[^a-z0-9]', '', base)[:35] or "teacher"
     code, i = base, 2
     while TeacherProfile.objects.filter(code=code).exists():
         code = f"{base}{i}"
@@ -630,6 +632,13 @@ def approve_application(app: TeacherApplication, note=""):
 
     user.is_active = True
     user.save(update_fields=["is_active"])
+
+    # Цвет аватара — из первого выбранного предмета (или случайный)
+    first_subject = app.desired_subjects.first()
+    color = first_subject.icon_bg_color() if first_subject else random.choice([
+        "#2563EB", "#16A34A", "#7C3AED", "#0891B2", "#DC2626",
+        "#D97706", "#059669", "#DB2777", "#EA580C", "#0D9488",
+    ])
 
     profile = TeacherProfile.objects.create(
         user=user,
@@ -639,6 +648,7 @@ def approve_application(app: TeacherApplication, note=""):
         code=code,
         role=app.role,
         bio=app.about,
+        color=color,
         brand_tagline=app.subject_tagline,
     )
     profile.subjects.set(app.desired_subjects.all())
