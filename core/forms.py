@@ -38,6 +38,7 @@ class TeacherMaterialForm(forms.ModelForm):
             "title": forms.TextInput(attrs={
                 "class": "f-input",
                 "placeholder": "Например: Законы Ньютона — конспект урока",
+            }),
             "order": forms.NumberInput(attrs={
                 "class": "f-input", "min": 0, "placeholder": "Номер урока (необязательно)",
             }),
