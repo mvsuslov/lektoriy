@@ -52,6 +52,13 @@
     {% for e in form.excerpt.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
   </div>
 
+  <div class="f-group">
+    <label class="f-label" for="{{ form.order.id_for_label }}">Порядковый номер</label>
+    {{ form.order }}
+    <div class="f-hint">Для уроков: 1, 2, 3… Можно поменять позже — урок встанет на своё место</div>
+    {% for e in form.order.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+</div>
+
   <!-- Переключатель формата содержания -->
   <div class="f-group">
     <label class="f-label">Формат текста</label>

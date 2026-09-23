@@ -29,7 +29,7 @@ class TeacherMaterialForm(forms.ModelForm):
 
     class Meta:
         model = Material
-        fields = ("subject", "title", "type", "excerpt", "content",
+        fields = ("subject", "title", "type", "excerpt", "order", "content",
                   "content_format", "content_md",
                   "video_url", "embed_code")
         widgets = {
@@ -38,6 +38,8 @@ class TeacherMaterialForm(forms.ModelForm):
             "title": forms.TextInput(attrs={
                 "class": "f-input",
                 "placeholder": "Например: Законы Ньютона — конспект урока",
+            "order": forms.NumberInput(attrs={
+                "class": "f-input", "min": 0, "placeholder": "Номер урока (необязательно)",
             }),
             "excerpt": forms.Textarea(attrs={
                 "class": "f-input", "rows": 3,

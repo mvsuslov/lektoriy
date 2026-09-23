@@ -85,7 +85,7 @@ def subject_detail(request, slug):
 
     materials = Material.objects.filter(
         subject=subject, is_published=True
-    ).select_related("author", "subject")
+    ).select_related("author", "subject").order_by("order", "created_at")
 
     teacher_code = request.GET.get("teacher", "")
     type_filter = request.GET.get("type", "")
@@ -214,8 +214,8 @@ def teacher_subject(request, code, subject_slug):
             raise Http404("Предмет скрыт")
 
     materials = Material.objects.filter(
-        author=teacher, subject=subject, is_published=True
-    ).select_related("subject")
+        subject=subject, is_published=True
+    ).select_related("author", "subject").order_by("order", "created_at")
 
     type_filter = request.GET.get("type", "")
     if type_filter:

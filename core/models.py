@@ -362,13 +362,18 @@ class Material(models.Model):
                   "Встроится в страницу материала. Только для типа «Интерактив»"
     )
     is_published = models.BooleanField("Опубликовано", default=True)
+    order = models.PositiveIntegerField(
+        "Порядок", default=0,
+        help_text="Номер урока: 1, 2, 3… Чем больше число — тем ниже в списке. "
+                  "0 = по дате создания (для материалов без номера)."
+    )
     created_at = models.DateTimeField("Создано", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)
 
     class Meta:
         verbose_name = "Материал"
         verbose_name_plural = "Материалы"
-        ordering = ["created_at"]
+        ordering = ["order", "created_at"]
 
     def __str__(self):
         return self.title

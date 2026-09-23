@@ -197,6 +197,7 @@ class MaterialAdminForm(forms.ModelForm):
 class MaterialAdmin(admin.ModelAdmin):
     form = MaterialAdminForm
     list_display = ("title", "subject", "type", "author_name", "is_published", "created_at")
+    list_editable = ("order", "is_published")
     list_filter = ("subject", "type", "is_published")
     search_fields = ("title", "excerpt")
     inlines = [AttachmentInline, LinkInline]
