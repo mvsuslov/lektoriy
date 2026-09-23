@@ -196,7 +196,7 @@ class MaterialAdminForm(forms.ModelForm):
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
     form = MaterialAdminForm
-    list_display = ("title", "subject", "type", "author_name", "is_published", "created_at")
+    list_display = ("title", "subject", "type", "author_name", "order", "is_published", "created_at")
     list_editable = ("order", "is_published")
     list_filter = ("subject", "type", "is_published")
     search_fields = ("title", "excerpt")
