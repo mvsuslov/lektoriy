@@ -24,12 +24,11 @@
       <a class="tile" href="{% url 'subject_detail' s.slug %}">
         <div class="tile-icon" style="background:{{ s.icon_bg_color }}18">{{ s.icon }}</div>
         <h3>{{ s.name }}</h3>
-        <div class="tile-count" style="color:{{ s.icon_bg_color }}">
-          {% if show_material_count %}
+        {% if show_material_count %}
+          <div class="tile-count" style="color:{{ s.icon_bg_color }}">
             {% with n=s.pub_count %}{% if n %}{{ n }} {{ n|ru_plural:"материал,материала,материалов" }}{% else %}скоро{% endif %}{% endwith %}
+          </div>
           {% endif %}
-        </div>
-        </div>
         {% with ts=s.teachers.all %}
           {% if ts %}
           <div class="tile-teach">{% for t in ts %}{{ t.short_name }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>

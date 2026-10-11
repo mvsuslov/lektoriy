@@ -11,12 +11,11 @@
       <a class="tile" href="{% url 'subject_detail' s.slug %}">
         <div class="tile-icon" style="background:{{ s.icon_bg_color }}18">{{ s.icon }}</div>
         <h3>{{ s.name }}</h3>
+        {% if show_material_count %}
         <div class="tile-count" style="color:{{ s.icon_bg_color }}">
-          {% if show_material_count %}
-            {% with n=s.pub_count %}{% if n %}{{ n }} {{ n|ru_plural:"материал,материала,материалов" }}{% else %}скоро{% endif %}{% endwith %}
-          {% endif %}
-</div>
+          {% with n=s.pub_count %}{% if n %}{{ n }} {{ n|ru_plural:"материал,материала,материалов" }}{% else %}скоро{% endif %}{% endwith %}
         </div>
+        {% endif %}
       </a>
       {% endif %}
     {% endfor %}
