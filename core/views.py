@@ -72,12 +72,13 @@ def portal_home(request):
         "recent": recent,
         "teachers": teachers,
         "teachers_total": TeacherProfile.objects.count(),
+        "show_material_count": SiteSettings.get().show_material_count,
     })
 
 
 def all_subjects(request):
     subjects = Subject.objects.filter(is_hidden=False).select_related('direction')
-    return render(request, "portal/subjects.html", {"subjects": subjects})
+    return render(request, "portal/subjects.html", {"subjects": subjects, "show_material_count": SiteSettings.get().show_material_count,})
 
 
 def subject_detail(request, slug):

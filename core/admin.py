@@ -198,11 +198,11 @@ class MaterialAdmin(admin.ModelAdmin):
     form = MaterialAdminForm
     list_display = ("title", "subject", "type", "author_name", "order", "is_published", "created_at")
     list_editable = ("order", "is_published")
-    list_filter = ("subject", "type", "is_published")
+    list_filter = ("subject", "type", "is_published", "author")
     search_fields = ("title", "excerpt")
     inlines = [AttachmentInline, LinkInline]
-    readonly_fields = ("author",)
     exclude = ("slug",)
+    # readonly_fields УБРАЛИ author — теперь редактируемое
 
     @admin.display(description="Автор")
     def author_name(self, obj):
@@ -227,14 +227,19 @@ class MaterialAdmin(admin.ModelAdmin):
                 kwargs["queryset"] = Subject.objects.none()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+    def get_readonly_fields(self, request, obj=None):
+        # Автор редактируемый ТОЛЬКО для суперпользователя
+        if is_super(request.user):
+            return ()
+        return ("author",)
+
     def save_model(self, request, obj, form, change):
-        # Автор подставляется автоматически
+        # Автор подставляется автоматически только при СОЗДАНИИ, если не выбран
         if not obj.author_id:
             profile = getattr(request.user, "teacher_profile", None)
             if profile:
                 obj.author = profile
             else:
-                # суперпользователь без профиля — берём первый профиль
                 obj.author = TeacherProfile.objects.first()
         super().save_model(request, obj, form, change)
 

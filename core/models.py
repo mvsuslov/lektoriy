@@ -224,7 +224,10 @@ class Subject(models.Model):
 class TeacherProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-        related_name="teacher_profile", verbose_name="Пользователь"
+        related_name="teacher_profile", verbose_name="Пользователь",
+        null=True, blank=True,
+        help_text="Оставьте пустым для виртуального автора "
+                  "(отображается на сайте, но не может входить в кабинет)"
     )
     first_name = models.CharField("Имя", max_length=50)
     middle_name = models.CharField("Отчество", max_length=50)
@@ -440,6 +443,10 @@ class SiteSettings(models.Model):
         "Методический анализ включён", default=True,
         help_text="Снимите галочку — раздел исчезнет из кабинета, "
                   "данные проверок сохранятся."
+    )
+    show_material_count = models.BooleanField(
+        "Показывать количество материалов", default=True,
+        help_text="На карточках предметов отображается «N материалов»"
     )
 
     class Meta:

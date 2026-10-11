@@ -25,7 +25,10 @@
         <div class="tile-icon" style="background:{{ s.icon_bg_color }}18">{{ s.icon }}</div>
         <h3>{{ s.name }}</h3>
         <div class="tile-count" style="color:{{ s.icon_bg_color }}">
-          {% with n=s.pub_count %}{% if n %}{{ n }} {{ n|ru_plural:"материал,материала,материалов" }}{% else %}скоро{% endif %}{% endwith %}
+          {% if show_material_count %}
+            {% with n=s.pub_count %}{% if n %}{{ n }} {{ n|ru_plural:"материал,материала,материалов" }}{% else %}скоро{% endif %}{% endwith %}
+          {% endif %}
+        </div>
         </div>
         {% with ts=s.teachers.all %}
           {% if ts %}
