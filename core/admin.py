@@ -15,6 +15,9 @@ from .models import (Attachment, Direction, Link, Material, Subject,
 from django.utils import timezone
 from .models import TeacherApplication
 
+from .models import Group  # добавить в импорты
+
+
 User = get_user_model()
 
 
@@ -193,15 +196,33 @@ class MaterialAdminForm(forms.ModelForm):
         model = Material
         fields = '__all__'
 
+# ============ Добавляем номер групп ============
+@admin.register(Group)
+class GroupAdmin(admin.ModelAdmin):
+    list_display = ("name", "color_swatch", "materials_count")
+    search_fields = ("name",)
+
+    @admin.display(description="Цвет")
+    def color_swatch(self, obj):
+        return mark_safe(
+            f'<span style="display:inline-block;width:16px;height:16px;'
+            f'border-radius:4px;background:{obj.color()};vertical-align:middle"></span>'
+        )
+
+    @admin.display(description="Материалов")
+    def materials_count(self, obj):
+        return obj.materials.count()
+
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
     form = MaterialAdminForm
     list_display = ("title", "subject", "type", "author_name", "order", "is_published", "created_at")
     list_editable = ("order", "is_published")
-    list_filter = ("subject", "type", "is_published", "author")
     search_fields = ("title", "excerpt")
     inlines = [AttachmentInline, LinkInline]
     exclude = ("slug",)
+    filter_horizontal = ("groups",)
+    list_filter = ("subject", "type", "is_published", "author", "groups")
     # readonly_fields УБРАЛИ author — теперь редактируемое
 
     @admin.display(description="Автор")

@@ -220,6 +220,27 @@ class Subject(models.Model):
     def __str__(self):
         return self.name
 
+class Group(models.Model):
+    """Учебная группа: 111, 212 и т.д. Цвет генерируется из номера."""
+    name = models.CharField("Название", max_length=50, unique=True)
+
+    class Meta:
+        verbose_name = "Группа"
+        verbose_name_plural = "Группы"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def color(self):
+        """Один и тот же номер → всегда один и тот же цвет."""
+        import hashlib
+        palette = [
+            '#2563EB', '#16A34A', '#7C3AED', '#0891B2', '#DC2626',
+            '#D97706', '#059669', '#DB2777', '#EA580C', '#0D9488',
+        ]
+        h = int(hashlib.md5(self.name.encode()).hexdigest()[:6], 16)
+        return palette[h % len(palette)]
 
 class TeacherProfile(models.Model):
     user = models.OneToOneField(
@@ -334,6 +355,12 @@ class Material(models.Model):
         related_name="materials", verbose_name="Автор",
         help_text="Заполняется автоматически"
     )
+
+    groups = models.ManyToManyField(
+        Group, related_name="materials", verbose_name="Группы", blank=True,
+        help_text="Для каких групп этот материал"
+    )
+
     title = models.CharField("Заголовок", max_length=200)
     slug = models.SlugField("Адрес (slug)", unique=True, max_length=220)
     type = models.CharField(

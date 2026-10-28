@@ -35,23 +35,34 @@
 
 <div class="chips">
   <a class="chip {% if not current_type %}active{% endif %}"
-     href="?{% if current_teacher %}teacher={{ current_teacher }}&{% endif %}">Все типы</a>
+     href="?{% if current_teacher %}teacher={{ current_teacher }}&{% endif %}{% if current_group %}group={{ current_group }}{% endif %}">Все типы</a>
   {% for value, label in type_choices %}
     {% if value in types %}
     <a class="chip {% if current_type == value %}active{% endif %}"
-       href="?type={{ value }}{% if current_teacher %}&teacher={{ current_teacher }}{% endif %}">{{ label }}</a>
+       href="?type={{ value }}{% if current_teacher %}&teacher={{ current_teacher }}{% endif %}{% if current_group %}&group={{ current_group }}{% endif %}">{{ label }}</a>
     {% endif %}
   {% endfor %}
   {% if teachers|length > 1 %}
   <span class="chip-sep"></span>
   <a class="chip {% if not current_teacher %}active{% endif %}"
-     href="?{% if current_type %}type={{ current_type }}{% endif %}">Все преподаватели</a>
+     href="?{% if current_type %}type={{ current_type }}{% endif %}{% if current_group %}&group={{ current_group }}{% endif %}">Все преподаватели</a>
   {% for t in teachers %}
   <a class="chip {% if current_teacher == t.code %}active{% endif %}"
-     href="?teacher={{ t.code }}{% if current_type %}&type={{ current_type }}{% endif %}">👤 {{ t.short_name }}</a>
+     href="?teacher={{ t.code }}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_group %}&group={{ current_group }}{% endif %}">👤 {{ t.short_name }}</a>
   {% endfor %}
   {% endif %}
 </div>
+
+{% if groups %}
+<div class="chips" style="margin-top:10px">
+  <a class="chip {% if not current_group %}active{% endif %}"
+     href="?{% if current_type %}type={{ current_type }}{% endif %}{% if current_teacher %}&teacher={{ current_teacher }}{% endif %}">Все группы</a>
+  {% for g in groups %}
+  <a class="chip {% if current_group == g.name %}active{% endif %}"
+     href="?group={{ g.name }}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_teacher %}&teacher={{ current_teacher }}{% endif %}">{{ g.name }}</a>
+  {% endfor %}
+</div>
+{% endif %}
 
 {% if page.object_list %}
 <div class="mats">
@@ -66,6 +77,15 @@
     </div>
     <h3>{{ m.title }}</h3>
     <p>{{ m.excerpt }}</p>
+    {% with gs=m.groups.all %}
+    {% if gs %}
+    <div class="group-tags">
+      {% for g in gs %}
+      <span class="group-tag" style="background:{{ g.color }}1A;color:{{ g.color }}">{{ g.name }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
     <div class="mat-meta">
       <span>👤 {{ m.author.short_name }}</span>
       {% if m.video_url %}<span>▶️ видео</span>{% endif %}
@@ -79,7 +99,7 @@
 <div class="pagination">
   {% for p in page.paginator.page_range %}
   <a class="page-btn {% if page.number == p %}active{% endif %}"
-     href="?page={{ p }}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_teacher %}&teacher={{ current_teacher }}{% endif %}">{{ p }}</a>
+     href="?page={{ p }}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_teacher %}&teacher={{ current_teacher }}{% endif %}{% if current_group %}&group={{ current_group }}{% endif %}">{{ p }}</a>
   {% endfor %}
 </div>
 {% endif %}

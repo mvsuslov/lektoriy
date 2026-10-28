@@ -52,6 +52,15 @@
     </div>
     <h3>{{ m.title }}</h3>
     <p>{{ m.excerpt }}</p>
+    {% with gs=m.groups.all %}
+    {% if gs %}
+    <div class="group-tags">
+      {% for g in gs %}
+      <span class="group-tag" style="background:{{ g.color }}1A;color:{{ g.color }}">{{ g.name }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
     <div class="mat-meta">
       <span>👤 {{ m.author.short_name }}</span>
       {% if m.video_url %}<span>▶️ видео</span>{% endif %}

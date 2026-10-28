@@ -16,7 +16,7 @@ from django.core.cache import cache
 from axes.decorators import axes_dispatch
 
 from .forms import AttachmentForm, LinkForm, TeacherMaterialForm
-from .models import Material, Subject, TeacherProfile
+from .models import Group, Material, Subject, TeacherProfile
 
 import hashlib
 import threading
@@ -33,7 +33,6 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth import get_user_model
 from .forms import TeacherRegisterForm
 from .models import TeacherApplication
-import secrets
 
 PER_PAGE = 6
 
@@ -78,7 +77,10 @@ def portal_home(request):
 
 def all_subjects(request):
     subjects = Subject.objects.filter(is_hidden=False).select_related('direction')
-    return render(request, "portal/subjects.html", {"subjects": subjects, "show_material_count": SiteSettings.get().show_material_count,})
+    return render(request, "portal/subjects.html", {
+        "subjects": subjects,
+        "show_material_count": SiteSettings.get().show_material_count,
+    })
 
 
 def subject_detail(request, slug):
@@ -90,13 +92,25 @@ def subject_detail(request, slug):
 
     teacher_code = request.GET.get("teacher", "")
     type_filter = request.GET.get("type", "")
+    group_filter = request.GET.get("group", "")
+
     if teacher_code:
         materials = materials.filter(author__code=teacher_code)
     if type_filter:
         materials = materials.filter(type=type_filter)
+    if group_filter:
+        # Материалы выбранной группы + общие (без групп)
+        materials = materials.filter(
+            Q(groups__name=group_filter) | Q(groups__isnull=True)
+        ).distinct()
 
     paginator = Paginator(materials, PER_PAGE)
     page = paginator.get_page(request.GET.get("page"))
+
+    available_groups = Group.objects.filter(
+        materials__subject=subject,
+        materials__is_published=True,
+    ).distinct().order_by("name")
 
     return render(request, "portal/subject.html", {
         "subject": subject,
@@ -107,6 +121,8 @@ def subject_detail(request, slug):
                       .values_list("type", flat=True).distinct(),
         "current_teacher": teacher_code,
         "current_type": type_filter,
+        "current_group": group_filter,
+        "groups": available_groups,
         "type_choices": Material.Type.choices,
     })
 
@@ -114,7 +130,7 @@ def subject_detail(request, slug):
 def material_detail(request, slug, material_slug):
     material = get_object_or_404(
         Material.objects.select_related("subject", "author")
-                        .prefetch_related("attachments", "links"),
+                        .prefetch_related("attachments", "links", "groups"),
         subject__slug=slug, slug=material_slug, is_published=True,
     )
 
@@ -130,6 +146,7 @@ def material_detail(request, slug, material_slug):
         "material": material,
         "rendered_md": rendered_md,
     })
+
 
 def teachers_list(request):
     query = request.GET.get("q", "").strip()
@@ -215,15 +232,27 @@ def teacher_subject(request, code, subject_slug):
             raise Http404("Предмет скрыт")
 
     materials = Material.objects.filter(
-        subject=subject, is_published=True
-    ).select_related("author", "subject").order_by("order", "created_at")
+        author=teacher, subject=subject, is_published=True
+    ).select_related("subject").order_by("order", "created_at")
 
     type_filter = request.GET.get("type", "")
+    group_filter = request.GET.get("group", "")
+
     if type_filter:
         materials = materials.filter(type=type_filter)
+    if group_filter:
+        materials = materials.filter(
+            Q(groups__name=group_filter) | Q(groups__isnull=True)
+        ).distinct()
 
     paginator = Paginator(materials, PER_PAGE)
     page = paginator.get_page(request.GET.get("page"))
+
+    available_groups = Group.objects.filter(
+        materials__subject=subject,
+        materials__is_published=True,
+        materials__author=teacher,
+    ).distinct().order_by("name")
 
     return render(request, "teacher/subject.html", {
         "teacher": teacher,
@@ -233,6 +262,8 @@ def teacher_subject(request, code, subject_slug):
             author=teacher, subject=subject, is_published=True
         ).values_list("type", flat=True).distinct(),
         "current_type": type_filter,
+        "current_group": group_filter,
+        "groups": available_groups,
         "type_choices": Material.Type.choices,
     })
 
@@ -274,6 +305,7 @@ def portal_login(request):
 
     return render(request, "desk/login.html", {"error": error})
 
+
 # ------------------------------------------------------------------
 # Кабинет преподавателя
 # ------------------------------------------------------------------
@@ -313,6 +345,7 @@ def desk_material_new(request):
             material = form.save(commit=False)
             material.author = teacher
             material.save()
+            form.save_groups(material)
             if file_form.cleaned_data.get("file"):
                 attachment = file_form.save(commit=False)
                 attachment.material = material
@@ -349,6 +382,7 @@ def desk_material_edit(request, pk):
                                    teacher=material.author)
         if form.is_valid():
             form.save()
+            form.save_groups(material)
             messages.success(request, "Изменения сохранены!")
             return redirect("desk_home")
     else:
@@ -570,6 +604,7 @@ def desk_review_list(request):
         "teacher": teacher, "reviews": reviews,
     })
 
+
 # ------------------------------------------------------------------
 # Регистрация преподавателей
 # ------------------------------------------------------------------
@@ -620,6 +655,7 @@ TRANSLIT = {
     'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
     'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
 }
+
 
 def _make_code_from_initials(first_name, middle_name, last_name):
     """Инициалы ФИО → латинский код. Михаил Владимирович Суслов → mvs."""

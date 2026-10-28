@@ -6,6 +6,29 @@ import re
 
 from .models import Attachment, Link, Material, Review, Subject
 
+def parse_groups_spec(spec):
+    """'111, 113, 115-117' → ['111', '113', '115', '116', '117']"""
+    result, seen = [], set()
+    for part in str(spec).replace(';', ',').split(','):
+        part = part.strip()
+        if not part:
+            continue
+        a, dash, b = part.partition('-')
+        if dash and a.strip().isdigit() and b.strip().isdigit():
+            x, y = int(a), int(b)
+            if x <= y and y - x <= 50:
+                width = max(len(a.strip()), len(b.strip()))
+                names = [str(i).zfill(width) for i in range(x, y + 1)]
+            else:
+                names = [part]
+        else:
+            names = [part]
+        for n in names:
+            if n not in seen:
+                seen.add(n)
+                result.append(n)
+    return result
+
 # ==== ДОБАВЛЕНО: список разрешённых видеохостингов ====
 ALLOWED_VIDEO_HOSTS = {
     'youtube.com', 'www.youtube.com', 'youtu.be',
@@ -58,6 +81,15 @@ class TeacherMaterialForm(forms.ModelForm):
             }),
         }
 
+    groups_spec = forms.CharField(
+        label="Группы", required=False,
+        widget=forms.TextInput(attrs={
+            "class": "f-input",
+            "placeholder": "Например: 111, 113, 115-117",
+        })
+    )
+
+
     def __init__(self, *args, teacher=None, **kwargs):
         super().__init__(*args, **kwargs)
         if teacher:
@@ -68,6 +100,10 @@ class TeacherMaterialForm(forms.ModelForm):
         self.fields["content_md"].required = False
         self.fields["video_url"].required = False
         self.fields["embed_code"].required = False
+        if self.instance and self.instance.pk:
+            self.fields["groups_spec"].initial = ", ".join(
+                g.name for g in self.instance.groups.all()
+            )
 
     def clean(self):
         cleaned = super().clean()
@@ -126,6 +162,12 @@ class TeacherMaterialForm(forms.ModelForm):
 
         cleaned = re.sub(iframe_pattern, safe_iframe, cleaned)
         return cleaned
+
+    def save_groups(self, material):
+        from .models import Group
+        names = parse_groups_spec(self.cleaned_data.get("groups_spec", ""))
+        groups = [Group.objects.get_or_create(name=n)[0] for n in names]
+        material.groups.set(groups)
 
 
 class AttachmentForm(forms.ModelForm):
