@@ -57,7 +57,14 @@
     {{ form.order }}
     <div class="f-hint">Для уроков: 1, 2, 3… Можно поменять позже — урок встанет на своё место</div>
     {% for e in form.order.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
-</div>
+  </div>
+
+  <div class="f-group">
+    <label class="f-label" for="{{ form.groups_spec.id_for_label }}">Группы</label>
+    {{ form.groups_spec }}
+    <div class="f-hint">Для каких групп этот материал. Через запятую, можно диапазонами: 111, 113, 115-117. Необязательно.</div>
+    {% for e in form.groups_spec.errors %}<div class="f-error">{{ e }}</div>{% endfor %}
+  </div>
 
   <!-- Переключатель формата содержания -->
   <div class="f-group">

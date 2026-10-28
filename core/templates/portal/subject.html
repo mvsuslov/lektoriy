@@ -81,7 +81,9 @@
     {% if gs %}
     <div class="group-tags">
       {% for g in gs %}
-      <span class="group-tag" style="background:{{ g.color }}1A;color:{{ g.color }}">{{ g.name }}</span>
+      <span class="badge group-badge" style="color:{{ g.color }};background:{{ g.color }}1A;border:1px solid {{ g.color }}40">
+        Группа: {{ g.name }}
+      </span>
       {% endfor %}
     </div>
     {% endif %}
